@@ -6,34 +6,36 @@ Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www
 
 ### 3D printed parts
 
-- 5 beam.stl
-- 2 beam-w-hole.stl
-- 2 beam-bottom.stl (one symmetry !)
-- 2 beam-w-hole-bottom.stl (one symmetry !)
-- 4 corner.stl
-- 4 corner-bottom.stl
-- 5 corner-cover.stl
-- 1 corner-cover-cable.stl
-- 1 electronics-case.stl
-- 1 support.stl (optional)
+- 6x beam
+- 2x beam-w-hole
+- 2x beam-bottom (one symmetry !)
+- 2x beam-bottom-w-hole (one symmetry !)
+- 4x corner
+- 4x corner-bottom
+- 5x corner-cache
+- 1x corner-cache-w-hole
+- 4x panel-holder
+- 1x electronics-case
+- 1x support (optional)
 
 In doubt you can replace all beam variants by :
-- 8 beam-w-hole.stl
-- 4 beam-w-hole-bottom.stl (two symmetries !)
+- 8x beam-w-hole
+- 4x beam-bottom-w-hole (two symmetries !)
 
 The no-hole variants use less material and are faster to print.
 
 ### Hardware
 
-- 6 210mm square one-way mirrors (or standard glass/PMAA with one-way film)
-- 24 M2.5 15mm wood screws
+- 6x 210mm/2mm square one-way mirrors (or standard glass/PMAA with one-way film)
+- 24x M2 15mm wood screws
 
 ### Electronics
 
-- 6 80mm WS2812 LED strips (60 LEDS/m)
-- 1 Arduino Nano
-- 1 10A 5V power supply
-- three connectors wire
+- 6x 80cm WS2812 LED strips (60 LEDS/m)
+- 1x Arduino Nano
+- 1x AT-09/HM-10 Bluetooth module
+- 1x 10A 5V power supply
+- 3-wire cable
 
 
 ## Assembly
