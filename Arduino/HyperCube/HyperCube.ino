@@ -16,14 +16,14 @@ SoftwareSerial serialControl(BLE_TXD, BLE_RXD);
 CmdParser cmdParser;
 
 // global brightness
-uint8_t brightness = 255;
+uint8_t brightness = 128;
 
 // turn off everything
 boolean isStop = false;
 
 void setup() {
   animations = new Animations();
-  animations->setCurrentMode(RAINBOW);
+  animations->setCurrentMode(PULSE);
 
   serialControl.begin(9600);
 
