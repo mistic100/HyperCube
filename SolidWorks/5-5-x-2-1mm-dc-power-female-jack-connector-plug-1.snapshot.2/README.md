@@ -1,0 +1,1 @@
+https://grabcad.com/library/5-5-x-2-1mm-dc-power-female-jack-connector-plug-1
