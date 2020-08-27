@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "modes.h"
+#include "hues.h"
 
 class Animations {
 
@@ -18,10 +19,14 @@ class Animations {
     TBlendType blending;
     // displayed palette
     CRGBPalette16 palette;
+    // target palette for blending
+    CRGBPalette16 targetPalette;
     // palette offset
     int paletteIndex;
     // static color
     CRGB staticColor;
+
+    ColorGenerator colorGenerator;
 
     void run(boolean isStop) {
       if (isStop) {
@@ -30,28 +35,28 @@ class Animations {
       }
 
       switch (mode) {
-        case RAINBOW:
+        case M_RAINBOW:
           paletteIndex = paletteIndex + 1;
-          displayPaletteOnSide();
-          symetrizeSides();
+          displayPalette();
           break;
           
-        case RAINBOW_DROP:
-          runRainbowDrop();
-          symetrizeSides();
+        case M_RAINDROP:
+          runRaindrop();
           break;
 
-        case CYLON:
+        case M_CYLON:
           runCylon();
-          symetrizeSides();
           break;
 
-        case PULSE:
+        case M_PULSE:
           runPulse();
-          symetrizeSides();
           break;
 
-        case STATIC:
+        case M_RANDOM:
+          runRandom();
+          break;
+
+        case M_STATIC:
           fill_solid(leds, NUM_LEDS, staticColor);
           break;
       }
@@ -63,21 +68,30 @@ class Animations {
       blending = LINEARBLEND;
       paletteIndex = 0;
       
+      colorGenerator.reset();
+      
       switch (mode) {
-        case RAINBOW:
+        case M_RAINBOW:
           palette = RainbowColors_p;
           break;
 
-        case RAINBOW_DROP:
-        case CYLON:
-        case PULSE:
-          period = 50;
+        case M_RAINDROP:
+        case M_CYLON:
+        case M_PULSE:
+          period = 70;
           fill_solid(leds, NUM_LEDS, CRGB::Black);
           break;
-  
-        case STATIC:
+
+        case M_RANDOM:
+          palette = CRGBPalette16(CRGB::Black, CRGB::Black);
+          CRGB color = colorGenerator.random();
+          targetPalette = CRGBPalette16(color, color);
           break;
       }
+    }
+
+    void setHue(enum Hues newHue) {
+      colorGenerator.setHue(newHue);
     }
 
   private:
@@ -119,7 +133,7 @@ class Animations {
     }
 
     struct Drop {
-      int hue;
+      CRGB color;
       bool dir;
       int pos;
     };
@@ -143,21 +157,20 @@ class Animations {
         }
 
         // display the drop
-        leds[drops[i].pos] += CHSV(drops[i].hue, 255, 255);
+        leds[drops[i].pos] += drops[i].color;
         i++;
       }
     }
 
     void runPulse() {
-      static int hue = 0;
       static int nbDrops = 0;
       static Drop drops[2];
 
       // new drop every once
-      EVERY_N_MILLIS(500) {
+      EVERY_N_MILLIS(350) {
         if (nbDrops < 2) {
           Drop newDrop = {
-            .hue = hue-=20,
+            .color = colorGenerator.next(20),
             .dir = false,
             .pos = -1,
           };
@@ -167,13 +180,13 @@ class Animations {
       }
 
       fadeSide(180);
-
       showDrops(drops, &nbDrops);
+      symetrizeSides();
     }
 
     void runCylon() {
       static Drop drop = {
-        .hue = 0,
+        .color = CRGB::Black,
         .dir = false,
         .pos = -1,
       };
@@ -194,31 +207,43 @@ class Animations {
         }
       }
 
-      drop.hue++;
-      leds[drop.pos] = CHSV(drop.hue, 255, 255);
+      leds[drop.pos] = colorGenerator.next(1);
+      symetrizeSides();
     }
 
-    void runRainbowDrop() {
+    void runRaindrop() {
       static int nbDrops = 0;
       static Drop drops[4];
 
       // randomly add a new drop
       if (nbDrops < 4) {
         int rnd = random8();
-        if (rnd < 32) {
+        if (rnd < 48) {
           Drop newDrop = {
-            .hue = random8(),
-            .dir = rnd < 16,
-            .pos = rnd < 16 ? NUM_LEDS_SIDE : -1,
+            .color = colorGenerator.random(),
+            .dir = rnd < 24,
+            .pos = rnd < 24 ? NUM_LEDS_SIDE : -1,
           };
           drops[nbDrops] = newDrop;
           nbDrops++;
         }
       }
 
-      fadeSide(100);
-
+      fadeSide(150);
       showDrops(drops, &nbDrops);
+      symetrizeSides();
+    }
+
+    void runRandom() {
+      nblendPaletteTowardPalette(palette, targetPalette, 24);
+
+      EVERY_N_SECONDS(5) {
+        CRGB color = colorGenerator.random();
+        targetPalette = CRGBPalette16(color, color);
+      }
+
+      displayPaletteOnSide();
+      symetrizeSides();
     }
 
 };

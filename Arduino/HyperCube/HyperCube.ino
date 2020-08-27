@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "modes.h"
+#include "hues.h"
 #include "Animations.h"
 
 // animation manager
@@ -16,21 +17,32 @@ SoftwareSerial serialControl(BLE_TXD, BLE_RXD);
 CmdParser cmdParser;
 
 // global brightness
-uint8_t brightness = 128;
+uint8_t brightness = 100;
 
 // turn off everything
 boolean isStop = false;
 
+boolean buttonValue = false;
+
 void setup() {
   animations = new Animations();
-  animations->setCurrentMode(PULSE);
+  animations->setHue(H_RAINBOW);
+  animations->setCurrentMode(M_RAINBOW);
 
+  Serial.begin(9600); 
   serialControl.begin(9600);
 
   FastLED.addLeds<LED_TYPE, PIN_LED, COLOR_ORDER>(animations->leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, MAX_MILLI_AMPS);
 }
 
 void loop() {
+  boolean val = analogRead(PIN_BUTTON) > 0;
+  if (val != buttonValue) {
+    isStop = !val;
+    buttonValue = val;
+  }
+  
   while (serialControl.available() > 0) {
     CmdBuffer<32> cmdBuffer;
     
@@ -52,7 +64,7 @@ void loop() {
         uint8_t r = atoi(cmdParser.getCmdParam(1));
         uint8_t g = atoi(cmdParser.getCmdParam(2));
         uint8_t b = atoi(cmdParser.getCmdParam(3));
-        animations->setCurrentMode(STATIC);
+        animations->setCurrentMode(M_STATIC);
         animations->staticColor = CRGB(r, g, b);
       }
     }
