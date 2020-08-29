@@ -1,10 +1,10 @@
 #pragma once
 
 #include <FastLED.h>
-
 #include "constants.h"
 #include "modes.h"
 #include "hues.h"
+#include "ColorGenerator.h"
 
 class Animations {
 
@@ -15,16 +15,14 @@ class Animations {
     int period;
     // current animation
     enum Modes mode;
-    // current blending mode
-    TBlendType blending;
+    // current hue
+    enum Hues hue;
     // displayed palette
     CRGBPalette16 palette;
     // target palette for blending
     CRGBPalette16 targetPalette;
     // palette offset
     int paletteIndex;
-    // static color
-    CRGB staticColor;
 
     ColorGenerator colorGenerator;
 
@@ -36,8 +34,7 @@ class Animations {
 
       switch (mode) {
         case M_RAINBOW:
-          paletteIndex = paletteIndex + 1;
-          displayPalette();
+          runRainbow();
           break;
           
         case M_RAINDROP:
@@ -55,31 +52,26 @@ class Animations {
         case M_RANDOM:
           runRandom();
           break;
-
-        case M_STATIC:
-          fill_solid(leds, NUM_LEDS, staticColor);
-          break;
       }
     }
 
-    void setCurrentMode(enum Modes newMode) {
+    void setMode(enum Modes newMode) {
       mode = newMode;
       period = 10;
-      blending = LINEARBLEND;
       paletteIndex = 0;
       
-      colorGenerator.reset();
+      setHue(hue);
+      fill_solid(leds, NUM_LEDS, CRGB::Black);
       
       switch (mode) {
         case M_RAINBOW:
-          palette = RainbowColors_p;
+          palette = colorGenerator.palette();
           break;
-
+        
         case M_RAINDROP:
         case M_CYLON:
         case M_PULSE:
           period = 70;
-          fill_solid(leds, NUM_LEDS, CRGB::Black);
           break;
 
         case M_RANDOM:
@@ -91,7 +83,8 @@ class Animations {
     }
 
     void setHue(enum Hues newHue) {
-      colorGenerator.setHue(newHue);
+      hue = newHue;
+      colorGenerator.setHue(hue);
     }
 
   private:
@@ -99,14 +92,14 @@ class Animations {
     void displayPalette() {
       for (int i = 0; i < NUM_LEDS; i++) {
         uint8_t index = 255.0 * i / NUM_LEDS;
-        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, blending);
+        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, LINEARBLEND);
       }
     }
 
     void displayPaletteOnSide() {
       for (int i = 0; i < NUM_LEDS_SIDE; i++) {
         uint8_t index = 255.0 * i / NUM_LEDS_SIDE;
-        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, blending);
+        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, LINEARBLEND);
       }
     }
 
@@ -242,6 +235,13 @@ class Animations {
         targetPalette = CRGBPalette16(color, color);
       }
 
+      displayPaletteOnSide();
+      symetrizeSides();
+    }
+
+    void runRainbow() {
+      paletteIndex = paletteIndex + 1;
+      
       displayPaletteOnSide();
       symetrizeSides();
     }

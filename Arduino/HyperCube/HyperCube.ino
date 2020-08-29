@@ -1,7 +1,6 @@
 #include <FastLED.h>
 #include <SoftwareSerial.h>
 #include <CmdParser.hpp>
-
 #include "constants.h"
 #include "modes.h"
 #include "hues.h"
@@ -17,19 +16,17 @@ SoftwareSerial serialControl(BLE_TXD, BLE_RXD);
 CmdParser cmdParser;
 
 // global brightness
-uint8_t brightness = 100;
+uint8_t brightness = INITIAL_BRIGHTNESS;
 
 // turn off everything
 boolean isStop = false;
 
-boolean buttonValue = false;
-
 void setup() {
   animations = new Animations();
   animations->setHue(H_RAINBOW);
-  animations->setCurrentMode(M_RAINBOW);
+  animations->setMode(M_RANDOM);
 
-  Serial.begin(9600); 
+  Serial.begin(9600);
   serialControl.begin(9600);
 
   FastLED.addLeds<LED_TYPE, PIN_LED, COLOR_ORDER>(animations->leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -37,35 +34,38 @@ void setup() {
 }
 
 void loop() {
-  boolean val = analogRead(PIN_BUTTON) > 0;
-  if (val != buttonValue) {
-    isStop = !val;
-    buttonValue = val;
-  }
+  isStop = analogRead(PIN_BUTTON) == 0;
   
   while (serialControl.available() > 0) {
     CmdBuffer<32> cmdBuffer;
     
     if (cmdBuffer.readFromSerial(&serialControl, 2000) && cmdParser.parseCmd(&cmdBuffer) != CMDPARSER_ERROR) {
-      if (cmdParser.equalCommand_P(PSTR("ON"))) {
-        isStop = false;
-      }
-      else if (cmdParser.equalCommand_P(PSTR("OFF"))) {
-        isStop = true;
-      }
-      else if (cmdParser.equalCommand_P(PSTR("BRIGHT"))) {
+      if (cmdParser.equalCommand_P(PSTR("BRIGHT"))) {
         brightness = atoi(cmdParser.getCmdParam(1));
       }
-      else if (cmdParser.equalCommand_P(PSTR("MODE"))) {
-        uint8_t mode = atoi(cmdParser.getCmdParam(1));
-        animations->setCurrentMode(Modes(mode % NUM_MODES));
+      else if (cmdParser.equalCommand_P(PSTR("BRIGHT+"))) {
+        brightness = qadd8(brightness, BRIGHTNESS_STEP);
       }
-      else if (cmdParser.equalCommand_P(PSTR("COLOR"))) {
-        uint8_t r = atoi(cmdParser.getCmdParam(1));
-        uint8_t g = atoi(cmdParser.getCmdParam(2));
-        uint8_t b = atoi(cmdParser.getCmdParam(3));
-        animations->setCurrentMode(M_STATIC);
-        animations->staticColor = CRGB(r, g, b);
+      else if (cmdParser.equalCommand_P(PSTR("BRIGHT-"))) {
+        brightness = qsub8(brightness, BRIGHTNESS_STEP);
+      }
+      else if (cmdParser.equalCommand_P(PSTR("MODE"))) {
+        animations->setMode(getMode(cmdParser.getCmdParam(1)));
+      }
+      else if (cmdParser.equalCommand_P(PSTR("MODE+"))) {
+        animations->setMode(Modes((animations->mode + 1) % NUM_MODES));
+      }
+      else if (cmdParser.equalCommand_P(PSTR("MODE-"))) {
+        animations->setMode(Modes(animations->mode == 0 ? NUM_MODES - 1 : animations->mode - 1));
+      }
+      else if (cmdParser.equalCommand_P(PSTR("HUE"))) {
+        animations->setHue(getHue(cmdParser.getCmdParam(1)));
+      }
+      else if (cmdParser.equalCommand_P(PSTR("HUE+"))) {
+        animations->setHue(Hues((animations->hue + 1) % NUM_HUES));
+      }
+      else if (cmdParser.equalCommand_P(PSTR("HUE-"))) {
+        animations->setHue(Hues(animations->hue == 0 ? NUM_HUES - 1 : animations->hue - 1));
       }
     }
   }

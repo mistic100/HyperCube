@@ -17,7 +17,7 @@ Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www
 - 4x panel-holder
 - 1x electronics-case
 - 1x electronics-case-top
-- 1x support (optional)
+- 1x support
 
 In doubt you can replace all beam variants by :
 - 8x beam-w-hole
@@ -34,7 +34,7 @@ The no-hole variants use less material and are faster to print.
 
 - 6x 80cm WS2812 LED strips (60 LEDS/m)
 - 1x Arduino Nano
-- 1x HM-10 Bluetooth module or similar
+- 1x Bluetooth module
 - 1x capacitive touch button (20x15mm)
 - 1x 10A 5V power supply
 - 3-wire cable
@@ -50,6 +50,48 @@ Special care must be put in the orientation of each LED strips and the placement
 
 The following diagram shows one way to arrange things (flattened cube seen from top).  
 ![diagram](diagram.png)
+
+
+## Code
+
+### Configuration
+
+Edit the `constants.h` file according to your wiring :
+
+- `PIN_LED` output pin use to control LEDS
+- `PIN_BUTTON` input pin for the control button
+- `BLE_RXD` RX pin for the BLE module
+- `BLE_TXD` TX pin for the BLE module
+
+Edit `MAX_MILLI_AMPS` according to the rating of your power supply (keep a safety margin, especially with cheap Chinese stuff).
+
+### Controls
+
+The cube is controlled via Bluetooth and can received basic serial commands:
+
+- `BRIGHT X`(X=0-255) to change the brightness
+- `BRIGHT+` to increase the brightness by 16
+- `BRIGHT-` to decrease the brightness by 16
+- `MODE X` to change the current mode, modes are:
+	- `RAINBOW`
+	- `RAINDROP`
+	- `PULSE`
+	- `CYLON`
+	- `RANDOM`
+- `MODE+` to use the next mode
+- `MODE-` to use the previous mode
+- `HUE X` to change the current hue, huse are:
+	- `RAINBOW`
+	- `RED`
+	- `ORANGE`
+	- `YELLOW`
+	- `GREEN`
+	- `BLUE`
+	- `PURPLE`
+	- `PINK`
+	- `WHITE`
+- `HUE+` to use the next hue
+- `HUE-` to use the previous hue
 
 
 ## License
