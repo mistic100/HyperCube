@@ -7,7 +7,8 @@
 #define MAX_MILLI_AMPS 8000
 #define PIN_LED 6
 #define PIN_BUTTON A0
-#define BLE_RXD 4
+#define THRES_BUTTON 1
+#define BLE_RXD 2
 #define BLE_TXD 3
-#define INITIAL_BRIGHTNESS 128
+#define INITIAL_BRIGHTNESS 100
 #define BRIGHTNESS_STEP 16

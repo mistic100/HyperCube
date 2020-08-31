@@ -77,17 +77,16 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `RAINDROP`
 	- `PULSE`
 	- `CYLON`
+	- `CHASER`
 	- `RANDOM`
 - `MODE+` to use the next mode
 - `MODE-` to use the previous mode
 - `HUE X` to change the current hue, huse are:
 	- `RAINBOW`
 	- `RED`
-	- `ORANGE`
 	- `YELLOW`
 	- `GREEN`
 	- `BLUE`
-	- `PURPLE`
 	- `PINK`
 	- `WHITE`
 - `HUE+` to use the next hue

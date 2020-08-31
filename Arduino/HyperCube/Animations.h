@@ -4,7 +4,13 @@
 #include "constants.h"
 #include "modes.h"
 #include "hues.h"
-#include "ColorGenerator.h"
+#include "functions.h"
+
+struct Drop {
+  CRGB color;
+  bool dir;
+  int pos;
+};
 
 class Animations {
 
@@ -23,8 +29,8 @@ class Animations {
     CRGBPalette16 targetPalette;
     // palette offset
     int paletteIndex;
-
-    ColorGenerator colorGenerator;
+    // color index
+    int colorIndex;
 
     void run(boolean isStop) {
       if (isStop) {
@@ -49,6 +55,10 @@ class Animations {
           runPulse();
           break;
 
+        case M_CHASER:
+          runChaser();
+          break;
+
         case M_RANDOM:
           runRandom();
           break;
@@ -59,13 +69,13 @@ class Animations {
       mode = newMode;
       period = 10;
       paletteIndex = 0;
+      colorIndex = 0;
       
-      setHue(hue);
       fill_solid(leds, NUM_LEDS, CRGB::Black);
       
       switch (mode) {
         case M_RAINBOW:
-          palette = colorGenerator.palette();
+          palette = getPalette(hue);
           break;
         
         case M_RAINDROP:
@@ -73,32 +83,34 @@ class Animations {
         case M_PULSE:
           period = 70;
           break;
+          
+        case M_CHASER:
+          period = 50;
+          break;
 
         case M_RANDOM:
           palette = CRGBPalette16(CRGB::Black, CRGB::Black);
-          CRGB color = colorGenerator.random();
-          targetPalette = CRGBPalette16(color, color);
+          targetPalette = CRGBPalette16(randomColor(), randomColor());
           break;
       }
     }
 
     void setHue(enum Hues newHue) {
       hue = newHue;
-      colorGenerator.setHue(hue);
-    }
 
-  private:
-
-    void displayPalette() {
-      for (int i = 0; i < NUM_LEDS; i++) {
-        uint8_t index = 255.0 * i / NUM_LEDS;
-        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, LINEARBLEND);
+      switch (mode) {
+        case M_RAINBOW:
+          palette = getPalette(hue);
+          break;
       }
     }
 
-    void displayPaletteOnSide() {
-      for (int i = 0; i < NUM_LEDS_SIDE; i++) {
-        uint8_t index = 255.0 * i / NUM_LEDS_SIDE;
+  private:
+    /** UTILITIES */
+
+    void showPalette(int endIndex) {
+      for (int i = 0; i < endIndex; i++) {
+        uint8_t index = 255.0 * i / endIndex;
         leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, LINEARBLEND);
       }
     }
@@ -119,19 +131,31 @@ class Animations {
       }
     }
 
-    void fadeSide(int fade) {
-      for (int i = 0; i < NUM_LEDS_SIDE; i++) {
+    void fade(int fade, int endIndex) {
+      for (int i = 0; i < endIndex; i++) {
         leds[i].nscale8(fade);
       }
     }
 
-    struct Drop {
-      CRGB color;
-      bool dir;
-      int pos;
-    };
+    CRGB nextColor(int inc) {
+      colorIndex+= inc;
 
-    void showDrops(Drop drops[], int *nbDrops) {
+      if (colorIndex >= 255) {
+        colorIndex-= 255;
+      }
+      
+      return colorFromPalette(colorIndex);
+    }
+
+    CRGB randomColor() {
+      return colorFromPalette(random8());
+    }
+
+    CRGB colorFromPalette(int value) {
+      return ColorFromPalette(getPalette(hue), value, 255, LINEARBLEND);
+    }
+
+    void showDrops(Drop drops[], int *nbDrops, int endIndex) {
       for (int i = 0; i < *nbDrops;) {
         // move each drop
         if (drops[i].dir) {
@@ -141,7 +165,7 @@ class Animations {
         }
 
         // remove drops on ends
-        if (drops[i].pos == -1 || drops[i].pos == NUM_LEDS_SIDE) {
+        if (drops[i].pos == -1 || drops[i].pos == endIndex) {
           for (int j=i; j<*nbDrops-1; j++) {
               drops[j] = drops[j + 1];
           }
@@ -155,15 +179,23 @@ class Animations {
       }
     }
 
+    /** ANIMATIONS */
+
+    void runRainbow() {
+      paletteIndex = paletteIndex + 1;
+      
+      showPalette(NUM_LEDS_SIDE);
+      symetrizeSides();
+    }
+
     void runPulse() {
       static int nbDrops = 0;
       static Drop drops[2];
 
-      // new drop every once
       EVERY_N_MILLIS(350) {
         if (nbDrops < 2) {
           Drop newDrop = {
-            .color = colorGenerator.next(20),
+            .color = nextColor(20),
             .dir = false,
             .pos = -1,
           };
@@ -172,8 +204,8 @@ class Animations {
         }
       }
 
-      fadeSide(180);
-      showDrops(drops, &nbDrops);
+      fade(180, NUM_LEDS_SIDE);
+      showDrops(drops, &nbDrops, NUM_LEDS_SIDE);
       symetrizeSides();
     }
 
@@ -184,7 +216,7 @@ class Animations {
         .pos = -1,
       };
 
-      fadeSide(100);
+      fade(100, NUM_LEDS_SIDE);
 
       if (drop.dir) {
         drop.pos--;
@@ -200,7 +232,7 @@ class Animations {
         }
       }
 
-      leds[drop.pos] = colorGenerator.next(1);
+      leds[drop.pos] = nextColor(1);
       symetrizeSides();
     }
 
@@ -213,7 +245,7 @@ class Animations {
         int rnd = random8();
         if (rnd < 48) {
           Drop newDrop = {
-            .color = colorGenerator.random(),
+            .color = randomColor(),
             .dir = rnd < 24,
             .pos = rnd < 24 ? NUM_LEDS_SIDE : -1,
           };
@@ -222,27 +254,49 @@ class Animations {
         }
       }
 
-      fadeSide(150);
-      showDrops(drops, &nbDrops);
+      fade(150, NUM_LEDS_SIDE);
+      showDrops(drops, &nbDrops, NUM_LEDS_SIDE);
       symetrizeSides();
+    }
+
+    void runChaser() {
+      static Drop drop = {
+        .color = CRGB::Black,
+        .dir = false,
+        .pos = -1,
+      };
+
+      fade(150, NUM_LEDS);
+
+      drop.pos++;
+      if (drop.pos == NUM_LEDS) {
+        drop.pos = 0;
+      }
+
+      leds[drop.pos] = nextColor(1);
     }
 
     void runRandom() {
-      nblendPaletteTowardPalette(palette, targetPalette, 24);
-
-      EVERY_N_SECONDS(5) {
-        CRGB color = colorGenerator.random();
-        targetPalette = CRGBPalette16(color, color);
+      static bool odd = false;
+  
+      if (odd) {
+        nblendPaletteTowardPalette(palette, targetPalette, 12);
+      } else {
+        nblendPaletteTowardPaletteReverse(palette, targetPalette, 12);
       }
-
-      displayPaletteOnSide();
-      symetrizeSides();
-    }
-
-    void runRainbow() {
-      paletteIndex = paletteIndex + 1;
-      
-      displayPaletteOnSide();
+  
+      EVERY_N_MILLIS(2000) {
+        if (odd) {
+          targetPalette = CRGBPalette16(palette[0], randomColor());
+        }
+        else {
+          targetPalette = CRGBPalette16(randomColor(), palette[15]);
+        }
+  
+        odd = !odd;
+      }
+  
+      showPalette(NUM_LEDS_SIDE);
       symetrizeSides();
     }
 
