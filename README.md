@@ -2,6 +2,10 @@
 
 Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www.hyperspacelight.com/the-hypercube).
 
+![](https://galerie.strangeplanet.fr/_data/i/upload/2020/09/04/20200904192354-e907e9ac-me.jpg)
+
+[Photos on my website](https://galerie.strangeplanet.fr/index.php?/category/199)
+
 ## Parts list
 
 ### 3D printed parts
