@@ -46,13 +46,14 @@ The no-hole variants use less material and are faster to print.
 
 ## Assembly
 
-Special care must be put in the orientation of each LED strips and the placement of each beam.
+1. Start building the cube from the top panel, taking care where you use beams with or without holes to pass the wires. You will use all beams and corner pieces and five panels, dont put the last bottom panel yet
+2. Cut the LED strips to lenght en solder the wires, I recommend using dedicated power lines for each strip but you can use a single wire for the data line
+3. Glue the strips to each side and pass the wires in the beams, all wires must output on the same corner. I recommend adding CA glue as the standard 3M tape is not adhesive enough
+4. Check that every strip is working correctly
+5. Put the bottom panel and secure it in place by glueing the four panel holders
+6. Glue all height corner caches
 
-- The 6 LED strips are wired in parallel and must be in the same direction on the two sides of each beam (the direction changes every 20cm in the code).
-- All wires must output on the same corner.
-- All strips must be glued and the wires passed through the holes before puting the bottom panel.
-
-The following diagram shows one way to arrange things (flattened cube seen from top).  
+The following diagram shows one way to arrange strips (flattened cube seen from top).  
 ![diagram](diagram.png)
 
 
