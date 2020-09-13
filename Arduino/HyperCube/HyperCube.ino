@@ -2,6 +2,7 @@
 #include <SoftwareSerial.h>
 #include <CmdParser.hpp>
 #include <AverageValue.h>
+#include <EEPROM.h>
 #include "constants.h"
 #include "modes.h"
 #include "hues.h"
@@ -22,15 +23,23 @@ uint8_t brightness = INITIAL_BRIGHTNESS;
 // turn off everything
 boolean isStop = false;
 
+// track if the EEPROM needs to be update
+boolean needsSave = false;
+
 // touch button value
 AverageValue<long> buttonValue(40);
+boolean buttonStop = false;
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
+
+  brightness = EEPROM.read(BRIGHT_ADDR);
+  uint8_t mode = EEPROM.read(MODE_ADDR);
+  uint8_t hue = EEPROM.read(HUE_ADDR);
   
   animations = new Animations();
-  animations->setHue(H_RAINBOW);
-  animations->setMode(M_RAINBOW);
+  animations->setHue(Hues(hue % NUM_HUES));
+  animations->setMode(Modes(mode % NUM_MODES));
 
   Serial.begin(9600);
   serialControl.begin(9600);
@@ -45,50 +54,64 @@ void loop() {
 
     if (cmdBuffer.readFromSerial(&serialControl, 2000)) {
       if (cmdParser.parseCmd(cmdBuffer.getBuffer(), cmdBuffer.getBufferSize()) != CMDPARSER_ERROR) {
-        if (cmdParser.equalCommand_P(PSTR("BRIGHT"))) {
+        if (cmdParser.equalCommand_P(PSTR("ON"))) {
+          isStop = false;
+          printOn();
+        }
+        else if (cmdParser.equalCommand_P(PSTR("OFF"))) {
+          isStop = true;
+          printOn();
+        }
+        else if (cmdParser.equalCommand_P(PSTR("BRIGHT"))) {
           brightness = atoi(cmdParser.getCmdParam(1));
-          serialControl.print(F("BRIGHT="));
-          serialControl.println(brightness);
+          needsSave = true;
+          printBright();
         }
         else if (cmdParser.equalCommand_P(PSTR("BRIGHT+"))) {
           brightness = qadd8(brightness, BRIGHTNESS_STEP);
-          serialControl.print(F("BRIGHT="));
-          serialControl.println(brightness);
+          needsSave = true;
+          printBright();
         }
         else if (cmdParser.equalCommand_P(PSTR("BRIGHT-"))) {
           brightness = qsub8(brightness, BRIGHTNESS_STEP);
-          serialControl.print(F("BRIGHT="));
-          serialControl.println(brightness);
+          needsSave = true;
+          printBright();
         }
         else if (cmdParser.equalCommand_P(PSTR("MODE"))) {
           animations->setMode(getMode(cmdParser.getCmdParam(1)));
-          serialControl.print(F("MODE="));
-          serialControl.println(getModeStr(animations->mode));
+          needsSave = true;
+          printMode();
         }
         else if (cmdParser.equalCommand_P(PSTR("MODE+"))) {
           animations->setMode(Modes((animations->mode + 1) % NUM_MODES));
-          serialControl.print(F("MODE="));
-          serialControl.println(getModeStr(animations->mode));
+          needsSave = true;
+          printMode();
         }
         else if (cmdParser.equalCommand_P(PSTR("MODE-"))) {
           animations->setMode(Modes(animations->mode == 0 ? NUM_MODES - 1 : animations->mode - 1));
-          serialControl.print(F("MODE="));
-          serialControl.println(getModeStr(animations->mode));
+          needsSave = true;
+          printMode();
         }
         else if (cmdParser.equalCommand_P(PSTR("HUE"))) {
           animations->setHue(getHue(cmdParser.getCmdParam(1)));
-          serialControl.print(F("HUE="));
-          serialControl.println(getHueStr(animations->hue));
+          needsSave = true;
+          printHue();
         }
         else if (cmdParser.equalCommand_P(PSTR("HUE+"))) {
           animations->setHue(Hues((animations->hue + 1) % NUM_HUES));
-          serialControl.print(F("HUE="));
-          serialControl.println(getHueStr(animations->hue));
+          needsSave = true;
+          printHue();
         }
         else if (cmdParser.equalCommand_P(PSTR("HUE-"))) {
           animations->setHue(Hues(animations->hue == 0 ? NUM_HUES - 1 : animations->hue - 1));
-          serialControl.print(F("HUE="));
-          serialControl.println(getHueStr(animations->hue));
+          needsSave = true;
+          printHue();
+        }
+        else if (cmdParser.equalCommand_P(PSTR("STATE"))) {
+          printOn();
+          printBright();
+          printMode();
+          printHue();
         }
         else {
           serialControl.println(F("UNKNOWN COMMAND"));
@@ -103,7 +126,10 @@ void loop() {
   
   EVERY_N_MILLIS_I(timer, 10) {
     buttonValue.push(analogRead(PIN_BUTTON));
-    isStop = buttonValue.average() <= THRES_BUTTON;
+    boolean newButtonStop = buttonValue.average() <= THRES_BUTTON;
+    if (newButtonStop != buttonStop) {
+      isStop = buttonStop = newButtonStop;
+    }
     
     timer.setPeriod(animations->period);
     animations->run(isStop);
@@ -113,4 +139,33 @@ void loop() {
     
     digitalWrite(LED_BUILTIN, isStop ? LOW : HIGH);
   }
+
+  EVERY_N_SECONDS(5) {
+    if (needsSave) {
+      EEPROM.update(BRIGHT_ADDR, brightness);
+      EEPROM.update(MODE_ADDR, animations->mode);
+      EEPROM.update(HUE_ADDR, animations->hue);
+      needsSave = false;
+    }
+  }
+}
+
+void printOn() {
+  serialControl.print(F("ON="));
+  serialControl.println(isStop ? F("0") : F("1"));
+}
+
+void printBright() {
+  serialControl.print(F("BRIGHT="));
+  serialControl.println(brightness);
+}
+
+void printMode() {
+  serialControl.print(F("MODE="));
+  serialControl.println(getModeStr(animations->mode));
+}
+
+void printHue() {
+  serialControl.print(F("HUE="));
+  serialControl.println(getHueStr(animations->hue));
 }

@@ -2,7 +2,7 @@
 
 Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www.hyperspacelight.com/the-hypercube).
 
-![](https://galerie.strangeplanet.fr/_data/i/upload/2020/09/04/20200904192354-e907e9ac-me.jpg)
+![photo](Images/photo.jpg)
 
 [Photos on my website](https://galerie.strangeplanet.fr/index.php?/category/199)
 
@@ -54,7 +54,7 @@ The no-hole variants use less material and are faster to print.
 6. Glue all height corner caches
 
 The following diagram shows one way to arrange strips (flattened cube seen from top).  
-![diagram](diagram.png)
+![diagram](Images/diagram.png)
 
 
 ## Code
@@ -74,6 +74,8 @@ Edit `MAX_MILLI_AMPS` according to the rating of your power supply (keep a safet
 
 The cube is controlled via Bluetooth and can received basic serial commands:
 
+- `ON` to turn on the light
+- `OFF` to turn off the light
 - `BRIGHT X`(X=0-255) to change the brightness
 - `BRIGHT+` to increase the brightness by 16
 - `BRIGHT-` to decrease the brightness by 16
@@ -86,7 +88,7 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `RANDOM`
 - `MODE+` to use the next mode
 - `MODE-` to use the previous mode
-- `HUE X` to change the current hue, huse are:
+- `HUE X` to change the current hue, hues are:
 	- `RAINBOW`
 	- `RED`
 	- `YELLOW`
@@ -96,6 +98,13 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `WHITE`
 - `HUE+` to use the next hue
 - `HUE-` to use the previous hue
+
+
+## Application
+
+A flutter application (Android only) allows to control the light from your smartphone. It is only compatible with HM-10 Bluetooth modules.
+
+![app](Images/app.png)
 
 
 ## License
