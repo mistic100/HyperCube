@@ -19,17 +19,19 @@ class _ControlPage extends State<ControlPage> {
   StreamSubscription _stateSubsription;
 
   bool _on = true;
-  int _brightness = 100;
+  int _brightness = 127;
+  double _speed = 0.5;
   String _mode = 'RAINBOW';
   String _hue = 'RAINBOW';
 
   var MODES = [
-    {'name': 'RAINBOW', 'icon': Icons.done, 'selected': false},
-    {'name': 'RAINDROP', 'icon': Icons.done, 'selected': false},
-    {'name': 'PULSE', 'icon': Icons.done, 'selected': false},
-    {'name': 'CYLON', 'icon': Icons.done, 'selected': false},
-    {'name': 'CHASER', 'icon': Icons.done, 'selected': false},
-    {'name': 'RANDOM', 'icon': Icons.done, 'selected': false},
+    {'name': 'RAINBOW', 'selected': false},
+    {'name': 'RAINDROP', 'selected': false},
+    {'name': 'PULSE', 'selected': false},
+    {'name': 'CYLON', 'selected': false},
+    {'name': 'CHASER', 'selected': false},
+    {'name': 'NOISE', 'selected': false},
+    {'name': 'GRADIENT', 'selected': false},
   ];
 
   var HUES = [
@@ -81,6 +83,7 @@ class _ControlPage extends State<ControlPage> {
                 'ON/OFF',
                 style: Theme.of(context).textTheme.headline6,
               ),
+              secondary: Icon(Icons.power_settings_new),
               value: _on,
               activeColor: Theme.of(context).colorScheme.primary,
               onChanged: (value) {
@@ -192,6 +195,43 @@ class _ControlPage extends State<ControlPage> {
               ],
             ),
           ),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.fast_forward),
+                  title: Text('Speed'),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: _speed,
+                        min: 0.1,
+                        max: 0.9,
+                        divisions: 9,
+                        onChanged: (value) {
+                          setState(() {
+                            _speed = value;
+                          });
+                        },
+                        onChangeEnd: (value) {
+                          _send("SPEED $_speed");
+                        },
+                      ),
+                    ),
+                    Padding(
+                      child: SizedBox(
+                        child: Text('$_speed'),
+                        width: 30,
+                      ),
+                      padding: EdgeInsets.only(right: 15),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -239,6 +279,10 @@ class _ControlPage extends State<ControlPage> {
 
             case 'HUE':
               _hue = parts[1].trim();
+              break;
+
+            case 'SPEED':
+              _speed = double.parse(parts[1].trim());
               break;
           }
         });

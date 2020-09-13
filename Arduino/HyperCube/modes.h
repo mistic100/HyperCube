@@ -6,7 +6,8 @@ enum Modes {
   M_PULSE,
   M_CYLON,
   M_CHASER,
-  M_RANDOM,
+  M_NOISE,
+  M_GRADIENT,
   NUM_MODES
 };
 
@@ -26,8 +27,11 @@ enum Modes getMode(char* str) {
   if (strcasecmp_P(str, PSTR("CHASER")) == 0) {
     return M_CHASER;
   }
-  if (strcasecmp_P(str, PSTR("RANDOM")) == 0) {
-    return M_RANDOM;
+  if (strcasecmp_P(str, PSTR("NOISE")) == 0) {
+    return M_NOISE;
+  }
+  if (strcasecmp_P(str, PSTR("GRADIENT")) == 0) {
+    return M_GRADIENT;
   }
   return M_RAINBOW;
 }
@@ -44,8 +48,10 @@ String getModeStr(enum Modes mode) {
       return F("CYLON");
     case M_CHASER:
       return F("CHASER");
-    case M_RANDOM:
-      return F("RANDOM");
+    case M_NOISE:
+      return F("NOISE");
+    case M_GRADIENT:
+      return F("GRADIENT");
     default:
       return F("UNKNOWN");
   }

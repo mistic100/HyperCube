@@ -17,12 +17,14 @@ class Animations {
   public:
     // leds
     CRGB leds[NUM_LEDS];
+    // current animation
+    enum Modes mode = M_RAINBOW;
+    // current hue
+    enum Hues hue = H_RAINBOW;
+    // current speed
+    double speed = 0.5;
     // loop period in ms
     int period;
-    // current animation
-    enum Modes mode;
-    // current hue
-    enum Hues hue;
     // displayed palette
     CRGBPalette16 palette;
     // target palette for blending
@@ -59,15 +61,19 @@ class Animations {
           runChaser();
           break;
 
-        case M_RANDOM:
-          runRandom();
+        case M_NOISE:
+          runNoise();
+          break;
+
+        case M_GRADIENT:
+          runGradient();
           break;
       }
     }
 
     void setMode(enum Modes newMode) {
       mode = newMode;
-      period = 10;
+      period = 20 * speed;
       paletteIndex = 0;
       colorIndex = 0;
       
@@ -81,14 +87,14 @@ class Animations {
         case M_RAINDROP:
         case M_CYLON:
         case M_PULSE:
-          period = 70;
+          period *= 7;
           break;
           
         case M_CHASER:
-          period = 50;
+          period *= 5;
           break;
 
-        case M_RANDOM:
+        case M_GRADIENT:
           palette = CRGBPalette16(CRGB::Black, CRGB::Black);
           targetPalette = CRGBPalette16(randomColor(), randomColor());
           break;
@@ -101,6 +107,27 @@ class Animations {
       switch (mode) {
         case M_RAINBOW:
           palette = getPalette(hue);
+          break;
+
+        case M_GRADIENT:
+          targetPalette = CRGBPalette16(randomColor(), randomColor());
+          break;
+      }
+    }
+
+    void setSpeed(double newSpeed) {
+      speed = max(min(newSpeed, SPEED_MAX), SPEED_MIN);
+      period = 20 * speed;
+
+      switch (mode) {
+        case M_RAINDROP:
+        case M_CYLON:
+        case M_PULSE:
+          period *= 7;
+          break;
+          
+        case M_CHASER:
+          period *= 5;
           break;
       }
     }
@@ -192,7 +219,9 @@ class Animations {
       static int nbDrops = 0;
       static Drop drops[2];
 
-      EVERY_N_MILLIS(350) {
+      EVERY_N_MILLIS_I(timer, 350) {
+        timer.setPeriod(700 * speed);
+        
         if (nbDrops < 2) {
           Drop newDrop = {
             .color = nextColor(20),
@@ -222,13 +251,13 @@ class Animations {
         drop.pos--;
         if (drop.pos == -1) {
           drop.dir = false;
-          drop.pos = 1;
+          drop.pos += 2;
         }
       } else {
         drop.pos++;
         if (drop.pos == NUM_LEDS_SIDE) {
           drop.dir = true;
-          drop.pos = NUM_LEDS_SIDE - 2;
+          drop.pos -= 2;
         }
       }
 
@@ -276,7 +305,16 @@ class Animations {
       leds[drop.pos] = nextColor(1);
     }
 
-    void runRandom() {
+    void runNoise() {
+      fade(250, NUM_LEDS);
+
+      EVERY_N_MILLIS_I(timer, 30) {
+        timer.setPeriod(60 * speed);
+        leds[random8(0, NUM_LEDS)] += randomColor();
+      }
+    }
+
+    void runGradient() {
       static bool odd = false;
   
       if (odd) {
@@ -285,7 +323,9 @@ class Animations {
         nblendPaletteTowardPaletteReverse(palette, targetPalette, 12);
       }
   
-      EVERY_N_MILLIS(2000) {
+      EVERY_N_MILLIS_I(timer, 2000) {
+        timer.setPeriod(4000 * speed);
+        
         if (odd) {
           targetPalette = CRGBPalette16(palette[0], randomColor());
         }

@@ -85,7 +85,8 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `PULSE`
 	- `CYLON`
 	- `CHASER`
-	- `RANDOM`
+	- `NOISE`
+	- `GRADIENT`
 - `MODE+` to use the next mode
 - `MODE-` to use the previous mode
 - `HUE X` to change the current hue, hues are:
@@ -98,6 +99,9 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `WHITE`
 - `HUE+` to use the next hue
 - `HUE-` to use the previous hue
+- `SPEED X` (X=0.1-0.9) to change the speed
+- `SPEED+` to increase the speed by 0.1
+- `SPEED-` to decrease the speed by 0.1
 
 
 ## Application

@@ -15,7 +15,7 @@ void nblendPaletteTowardPaletteReverse( CRGBPalette16& current, CRGBPalette16& t
         if( p1[i] < p2[i] ) { p1[i]++; changes++; }
 
         // if the current value is greater than the target,
-        // increase it by one (or two if it's still greater).
+        // decrease it by one (or two if it's still greater).
         if( p1[i] > p2[i] ) {
             p1[i]--; changes++;
             if( p1[i] > p2[i] ) { p1[i]--; }

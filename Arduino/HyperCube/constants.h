@@ -7,8 +7,10 @@
 #define COLOR_ORDER GRB
 #define MAX_MILLI_AMPS 8000
 #define PIN_LED 6
-#define INITIAL_BRIGHTNESS 100
 #define BRIGHTNESS_STEP 16
+#define SPEED_STEP 0.1
+#define SPEED_MIN 0.1
+#define SPEED_MAX 0.9
 
 // Button config
 #define PIN_BUTTON A0
@@ -22,3 +24,4 @@
 #define BRIGHT_ADDR 0
 #define MODE_ADDR 1
 #define HUE_ADDR 2
+#define SPEED_ADDR 3
