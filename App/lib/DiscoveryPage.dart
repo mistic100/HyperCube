@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 import './HM10Device.dart';
+import './mock/BluetoothDeviceMock.dart';
 import 'constants.dart';
 
 class DiscoveryPage extends StatefulWidget {
@@ -15,7 +17,7 @@ class DiscoveryPage extends StatefulWidget {
 }
 
 class _DiscoveryPage extends State<DiscoveryPage> {
-  List<BluetoothDevice> devices = List<BluetoothDevice>();
+  List<ScanResult> devices = List<ScanResult>();
   StreamSubscription _devicesSubscription;
   bool _isDiscovering = false;
   bool _tryLastDevice = false;
@@ -68,7 +70,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
       body: ListView.builder(
         itemCount: devices.length,
         itemBuilder: (BuildContext context, index) {
-          BluetoothDevice device = devices[index];
+          BluetoothDevice device = devices[index].device;
           return ListTile(
             leading: Icon(
               Icons.bluetooth_connected,
@@ -104,31 +106,33 @@ class _DiscoveryPage extends State<DiscoveryPage> {
       _isDiscovering = true;
     });
 
-    FlutterBlue.instance.connectedDevices.then((devices) {
-      setState(() {
-        devices.forEach((device) {
-          if (!this.devices.contains(device)) {
-            this.devices.add(device);
-          }
-        });
-      });
+    if (kDebugMode) {
+      this.devices.add(ScanResult(
+            device: BluetoothDeviceMock.getInstance(),
+            rssi: 1,
+            advertisementData: null,
+          ));
+    }
 
-      _autoConnect();
+    FlutterBlue.instance.connectedDevices.then((devices) {
+      _addScanResults(devices
+          .map((device) =>
+              ScanResult(device: device, rssi: 0, advertisementData: null))
+          .toList());
     });
 
     _devicesSubscription = FlutterBlue.instance.scanResults.listen((results) {
-      setState(() {
-        results.forEach((result) {
-          if (!this.devices.contains(result.device)) {
-            this.devices.add(result.device);
-          }
-        });
-      });
-
-      _autoConnect();
+      _addScanResults(results);
     });
 
-    await FlutterBlue.instance.startScan(timeout: Duration(seconds: 30));
+    try {
+      await FlutterBlue.instance.startScan(timeout: Duration(seconds: 30));
+    } catch (e) {
+      // despite the "stopScan" in dismount, the scan is not always cancelled
+      if (e.message != 'Another scan is already in progress.') {
+        throw e;
+      }
+    }
 
     if (mounted) {
       _autoConnect();
@@ -139,11 +143,27 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     }
   }
 
+  void _addScanResults(List<ScanResult> results) {
+    if (this.mounted) {
+      setState(() {
+        results.forEach((result) {
+          if (!this.devices.contains(result)) {
+            this.devices.add(result);
+          }
+        });
+
+        this.devices.sort((a, b) => b.rssi - a.rssi);
+      });
+
+      _autoConnect();
+    }
+  }
+
   /// Tries to connect to a device and pop the context
   void _connectDeviceAndPop(BluetoothDevice device) async {
     HM10Device _device = await _connectDevice(device);
 
-    if (device == null) {
+    if (_device == null) {
       _showAlert();
     } else {
       Navigator.of(context).pop(_device);
@@ -171,6 +191,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
 
     if (service == null) {
       print('Service not found');
+      await device.disconnect();
       return new Future.value(null);
     }
 
@@ -184,6 +205,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
 
     if (characteristic == null) {
       print('Characteristic not found');
+      await device.disconnect();
       return new Future.value(null);
     }
 
@@ -217,9 +239,10 @@ class _DiscoveryPage extends State<DiscoveryPage> {
   /// Tries to autoconnect to the last device if present
   void _autoConnect() {
     if (_tryLastDevice) {
-      BluetoothDevice device = devices.firstWhere(
-          (device) => device.id.toString() == widget.lastDevice,
-          orElse: () => null);
+      BluetoothDevice device = devices
+          .map((result) => result.device)
+          .firstWhere((device) => device.id.toString() == widget.lastDevice,
+              orElse: () => null);
 
       if (device != null) {
         _tryLastDevice = false;

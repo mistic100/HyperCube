@@ -41,7 +41,7 @@ void setup() {
   animations = new Animations();
   animations->setHue(Hues(hue % NUM_HUES));
   animations->setMode(Modes(mode % NUM_MODES));
-  animations->setSpeed(speed / 100.0);
+  animations->setSpeed(speed);
 
   Serial.begin(9600);
   btSerial.begin(9600);
@@ -75,7 +75,7 @@ void loop() {
       EEPROM.update(BRIGHT_ADDR, brightness);
       EEPROM.update(MODE_ADDR, animations->mode);
       EEPROM.update(HUE_ADDR, animations->hue);
-      EEPROM.update(SPEED_ADDR, animations->speed * 100);
+      EEPROM.update(SPEED_ADDR, animations->speed);
       needsSave = false;
     }
   }

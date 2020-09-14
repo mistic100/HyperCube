@@ -99,9 +99,9 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `WHITE`
 - `HUE+` to use the next hue
 - `HUE-` to use the previous hue
-- `SPEED X` (X=0.1-0.9) to change the speed
-- `SPEED+` to increase the speed by 0.1
-- `SPEED-` to decrease the speed by 0.1
+- `SPEED X` (X=1-10) to change the speed
+- `SPEED+` to increase the speed by 1
+- `SPEED-` to decrease the speed by 1
 
 
 ## Application

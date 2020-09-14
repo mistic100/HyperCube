@@ -8,9 +8,9 @@
 #define MAX_MILLI_AMPS 8000
 #define PIN_LED 6
 #define BRIGHTNESS_STEP 16
-#define SPEED_STEP 0.1
-#define SPEED_MIN 0.1
-#define SPEED_MAX 0.9
+#define SPEED_STEP 1
+#define SPEED_MIN 1
+#define SPEED_MAX 10
 
 // Button config
 #define PIN_BUTTON A0

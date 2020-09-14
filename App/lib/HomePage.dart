@@ -45,7 +45,7 @@ class _HomePage extends State<HomePage> {
         title: Text('HyperCube'),
       ),
       body: _isLoading
-          ? CircularProgressIndicator()
+          ? Center(child: CircularProgressIndicator())
           : _bluetoothState != BluetoothState.on
               ? _buildEnableBluetooth()
               : _buildSelectDevice(),

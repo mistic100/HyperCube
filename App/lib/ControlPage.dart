@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import './HM10Device.dart';
+
+const double PADDING = 16;
 
 class ControlPage extends StatefulWidget {
   final HM10Device device;
@@ -17,10 +20,13 @@ class ControlPage extends StatefulWidget {
 class _ControlPage extends State<ControlPage> {
   Timer _stateTimer;
   StreamSubscription _stateSubsription;
+  ScrollController _scrollController = ScrollController();
+  String _buffer = "";
+  List<String> _logs = [];
 
   bool _on = true;
-  int _brightness = 127;
-  double _speed = 0.5;
+  double _brightness = 127;
+  double _speed = 5;
   String _mode = 'RAINBOW';
   String _hue = 'RAINBOW';
 
@@ -80,7 +86,7 @@ class _ControlPage extends State<ControlPage> {
           Card(
             child: SwitchListTile(
               title: Text(
-                'ON/OFF',
+                'Power',
                 style: Theme.of(context).textTheme.headline6,
               ),
               secondary: Icon(Icons.power_settings_new),
@@ -98,34 +104,31 @@ class _ControlPage extends State<ControlPage> {
           Card(
             child: Column(
               children: [
-                ListTile(
-                  leading: Icon(Icons.lightbulb_outline),
-                  title: Text('Brightness'),
-                ),
+                _buildCardTitle('Brightness', Icons.lightbulb_outline),
                 Row(
                   children: [
                     Expanded(
                       child: Slider(
-                        value: _brightness.toDouble(),
+                        value: _brightness,
                         min: 0,
                         max: 255,
                         divisions: 8,
                         onChanged: (value) {
                           setState(() {
-                            _brightness = value.toInt();
+                            _brightness = value;
                           });
                         },
                         onChangeEnd: (value) {
-                          _send("BRIGHT $_brightness");
+                          _send("BRIGHT ${_brightness.toInt()}");
                         },
                       ),
                     ),
                     Padding(
                       child: SizedBox(
-                        child: Text('$_brightness'),
+                        child: Text('${_brightness.toInt()}'),
                         width: 30,
                       ),
-                      padding: EdgeInsets.only(right: 15),
+                      padding: EdgeInsets.only(right: PADDING),
                     ),
                   ],
                 ),
@@ -157,13 +160,10 @@ class _ControlPage extends State<ControlPage> {
           Card(
             child: Column(
               children: [
-                ListTile(
-                  leading: Icon(Icons.color_lens),
-                  title: Text('Hue'),
-                ),
+                _buildCardTitle('Color', Icons.color_lens),
                 Padding(
                   child: ToggleButtons(
-                    borderWidth: null,
+                    renderBorder: false,
                     children: HUES
                         .map((e) => e['name'] == 'RAINBOW'
                             ? ShaderMask(
@@ -190,7 +190,7 @@ class _ControlPage extends State<ControlPage> {
                       _send("HUE $_hue");
                     },
                   ),
-                  padding: EdgeInsets.only(bottom: 15),
+                  padding: EdgeInsets.symmetric(vertical: PADDING),
                 ),
               ],
             ),
@@ -198,17 +198,14 @@ class _ControlPage extends State<ControlPage> {
           Card(
             child: Column(
               children: [
-                ListTile(
-                  leading: Icon(Icons.fast_forward),
-                  title: Text('Speed'),
-                ),
+                _buildCardTitle('Speed', Icons.fast_forward),
                 Row(
                   children: [
                     Expanded(
                       child: Slider(
                         value: _speed,
-                        min: 0.1,
-                        max: 0.9,
+                        min: 1,
+                        max: 10,
                         divisions: 9,
                         onChanged: (value) {
                           setState(() {
@@ -216,16 +213,50 @@ class _ControlPage extends State<ControlPage> {
                           });
                         },
                         onChangeEnd: (value) {
-                          _send("SPEED $_speed");
+                          _send("SPEED ${_speed.toInt()}");
                         },
                       ),
                     ),
                     Padding(
                       child: SizedBox(
-                        child: Text('$_speed'),
+                        child: Text('${_speed.toInt()}'),
                         width: 30,
                       ),
-                      padding: EdgeInsets.only(right: 15),
+                      padding: EdgeInsets.only(right: PADDING),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Card(
+            child: Column(
+              children: [
+                ExpansionTile(
+                  title: Text('Console'),
+                  leading: Icon(Icons.keyboard_hide),
+                  initiallyExpanded: kDebugMode,
+                  children: [
+                    Padding(
+                      child: SizedBox(
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          reverse: true,
+                          child: Text(
+                            _logs.join('\n'),
+                            textAlign: TextAlign.left,
+                            style:
+                                Theme.of(context).textTheme.bodyText1.copyWith(
+                                      fontFamily: 'monospace',
+                                      color: Colors.grey,
+                                    ),
+                          ),
+                        ),
+                        width: double.infinity,
+                        height: 150,
+                      ),
+                      padding: EdgeInsets.only(
+                          left: PADDING, right: PADDING, bottom: PADDING),
                     ),
                   ],
                 ),
@@ -237,8 +268,29 @@ class _ControlPage extends State<ControlPage> {
     );
   }
 
+  /// Component similar to ListTile but without bottom padding
+  Widget _buildCardTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Padding(
+          child: Icon(icon),
+          padding: EdgeInsets.only(top: PADDING, left: PADDING, right: PADDING),
+        ),
+        Padding(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.subtitle1,
+          ),
+          padding: EdgeInsets.only(top: PADDING, left: PADDING, right: PADDING),
+        ),
+      ],
+    );
+  }
+
   /// Send data to the device
   void _send(String data) {
+    _log("$data\n");
+
     try {
       widget.device.characteristic.write(utf8.encode("$data\n"));
     } catch (e) {
@@ -246,10 +298,10 @@ class _ControlPage extends State<ControlPage> {
     }
   }
 
-  String _buffer = "";
-
   /// Parse data received from the device
   void _parseValue(String value) {
+    _log(value);
+
     _buffer += value;
 
     if (_buffer[_buffer.length - 1] == '\n') {
@@ -270,7 +322,7 @@ class _ControlPage extends State<ControlPage> {
               break;
 
             case 'BRIGHT':
-              _brightness = int.parse(parts[1].trim());
+              _brightness = double.parse(parts[1].trim());
               break;
 
             case 'MODE':
@@ -314,15 +366,30 @@ class _ControlPage extends State<ControlPage> {
     ]);
   }
 
+  /// Refresh selected mode
   void _refreshModes() {
     MODES.forEach((element) {
       element['selected'] = element['name'] == _mode;
     });
   }
 
+  /// Refresh selected hue
   void _refreshHues() {
     HUES.forEach((element) {
       element['selected'] = element['name'] == _hue;
     });
+  }
+
+  /// append log
+  void _log(String value) {
+    value.split('\n').where((v) => v.isNotEmpty).forEach((v) => _logs.add(v));
+
+    while (_logs.length > 50) {
+      _logs.removeAt(0);
+    }
+
+    if (_scrollController.positions.isNotEmpty) {
+      _scrollController.jumpTo(0);
+    }
   }
 }

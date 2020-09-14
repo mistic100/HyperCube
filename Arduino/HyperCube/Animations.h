@@ -22,7 +22,7 @@ class Animations {
     // current hue
     enum Hues hue = H_RAINBOW;
     // current speed
-    double speed = 0.5;
+    int speed = 5;
     // loop period in ms
     int period;
     // displayed palette
@@ -73,7 +73,7 @@ class Animations {
 
     void setMode(enum Modes newMode) {
       mode = newMode;
-      period = 20 * speed;
+      period = 20 * speed / 10.0;
       paletteIndex = 0;
       colorIndex = 0;
       
@@ -117,7 +117,7 @@ class Animations {
 
     void setSpeed(double newSpeed) {
       speed = max(min(newSpeed, SPEED_MAX), SPEED_MIN);
-      period = 20 * speed;
+      period = 20 * speed / 10.0;
 
       switch (mode) {
         case M_RAINDROP:
@@ -220,7 +220,7 @@ class Animations {
       static Drop drops[2];
 
       EVERY_N_MILLIS_I(timer, 350) {
-        timer.setPeriod(700 * speed);
+        timer.setPeriod(700 * speed / 10.0);
         
         if (nbDrops < 2) {
           Drop newDrop = {
@@ -309,7 +309,7 @@ class Animations {
       fade(250, NUM_LEDS);
 
       EVERY_N_MILLIS_I(timer, 30) {
-        timer.setPeriod(60 * speed);
+        timer.setPeriod(60 * speed / 10.0);
         leds[random8(0, NUM_LEDS)] += randomColor();
       }
     }
@@ -324,7 +324,7 @@ class Animations {
       }
   
       EVERY_N_MILLIS_I(timer, 2000) {
-        timer.setPeriod(4000 * speed);
+        timer.setPeriod(4000 * speed / 10.0);
         
         if (odd) {
           targetPalette = CRGBPalette16(palette[0], randomColor());
