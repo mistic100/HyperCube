@@ -241,9 +241,11 @@ packages:
   system_setting:
     dependency: "direct main"
     description:
-      name: system_setting
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: master
+      resolved-ref: "06aa939e36d4c143a8456fc58434accae2b2a48d"
+      url: "git://github.com/Edward608/system_setting.git"
+    source: git
     version: "0.1.3"
   term_glyph:
     dependency: transitive
