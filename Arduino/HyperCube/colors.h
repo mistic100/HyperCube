@@ -10,7 +10,9 @@ static CRGBPalette16 GreenPalette(CHSV(44, 255, 255), CHSV(126, 255, 255), CHSV(
 static CRGBPalette16 BluePalette(CHSV(126, 255, 255), CHSV(200, 255, 255), CHSV(126, 255, 255));
 static CRGBPalette16 PinkPalette(CHSV(200, 255, 255), CHSV(242, 255, 255), CHSV(200, 255, 255));
 
-enum Hues {
+// TODO DEFINE_GRADIENT_PALETTE(name) { stops }
+
+enum Colors {
   H_RAINBOW,
   H_RED,
   H_YELLOW,
@@ -18,10 +20,10 @@ enum Hues {
   H_BLUE,
   H_PINK,
   H_WHITE,
-  NUM_HUES
+  NUM_COLORS
 };
 
-enum Hues getHue(char* str) {
+enum Colors getColor(char* str) {
   if (strcasecmp_P(str, PSTR("RAINBOW")) == 0) {
     return H_RAINBOW;
   }
@@ -46,8 +48,8 @@ enum Hues getHue(char* str) {
   return H_RAINBOW;
 }
 
-String getHueStr(enum Hues hue) {
-  switch (hue) {
+String getColorStr(enum Colors color) {
+  switch (color) {
     case H_RAINBOW:
       return F("RAINBOW");
     case H_RED:
@@ -67,8 +69,8 @@ String getHueStr(enum Hues hue) {
   }
 }
 
-CRGBPalette16 getPalette(enum Hues hue) {
-  switch (hue) {
+CRGBPalette16 getPalette(enum Colors color) {
+  switch (color) {
     case H_RAINBOW:
        return RainbowColors_p;
     case H_WHITE:

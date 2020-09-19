@@ -8,7 +8,8 @@ enum Modes {
   M_CHASER,
   M_NOISE,
   M_GRADIENT,
-  NUM_MODES
+  NUM_MODES,
+  M_PATTERN // not accessible through loop
 };
 
 enum Modes getMode(char* str) {
@@ -33,6 +34,9 @@ enum Modes getMode(char* str) {
   if (strcasecmp_P(str, PSTR("GRADIENT")) == 0) {
     return M_GRADIENT;
   }
+  if (strcasecmp_P(str, PSTR("PATTERN")) == 0) {
+    return M_PATTERN;
+  }
   return M_RAINBOW;
 }
 
@@ -52,6 +56,8 @@ String getModeStr(enum Modes mode) {
       return F("NOISE");
     case M_GRADIENT:
       return F("GRADIENT");
+    case M_PATTERN:
+      return F("PATTERN");
     default:
       return F("UNKNOWN");
   }

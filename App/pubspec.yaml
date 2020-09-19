@@ -24,12 +24,14 @@ dependencies:
   flutter:
     sdk: flutter
 
+  provider: ^4.3.2
   flutter_blue: ^0.7.2
+  shared_preferences: ^0.5.10
+  flutter_colorpicker: ^0.3.4
   system_setting:
     git:
       url: git://github.com/Edward608/system_setting.git
       ref: master
-  shared_preferences: ^0.5.10
 
 dev_dependencies:
   flutter_test:

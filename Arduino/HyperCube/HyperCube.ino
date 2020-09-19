@@ -5,7 +5,8 @@
 #include <EEPROM.h>
 #include "constants.h"
 #include "modes.h"
-#include "hues.h"
+#include "colors.h"
+#include "custom.h"
 #include "Animations.h"
 
 // animation manager
@@ -16,9 +17,6 @@ SoftwareSerial btSerial(BLE_RXD, BLE_TXD);
 
 // Command parser
 CmdParser cmdParser;
-
-// global brightness
-uint8_t brightness = 127;
 
 // turn off everything
 boolean isStop = false;
@@ -32,16 +30,28 @@ boolean buttonStop = false;
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-
-  brightness = EEPROM.read(BRIGHT_ADDR);
-  uint8_t mode = EEPROM.read(MODE_ADDR);
-  uint8_t hue = EEPROM.read(HUE_ADDR);
-  uint8_t speed = EEPROM.read(SPEED_ADDR);
   
   animations = new Animations();
-  animations->setHue(Hues(hue % NUM_HUES));
-  animations->setMode(Modes(mode % NUM_MODES));
+
+  uint8_t brightness = EEPROM.read(BRIGHT_ADDR);
+  if (brightness == 0) {
+    brightness = BRIGHTNESS_BASE;
+  }
+  uint8_t mode = EEPROM.read(MODE_ADDR);
+  uint8_t color = EEPROM.read(COLOR_ADDR);
+  uint8_t speed = EEPROM.read(SPEED_ADDR);
+  if (speed == 0) {
+    speed = SPEED_BASE;
+  }
+
+  if (EEPROM.read(PATTERN_ADDR) == CUSTOM_PATTERN_VERSION) {
+    EEPROM.get(PATTERN_ADDR, animations->pattern);
+  }
+
+  animations->setBrightness(brightness);
+  animations->setColor(Colors(color % NUM_COLORS));
   animations->setSpeed(speed);
+  animations->setMode(Modes(mode == M_PATTERN ? mode : mode % NUM_MODES));
 
   Serial.begin(9600);
   btSerial.begin(9600);
@@ -64,7 +74,7 @@ void loop() {
     timer.setPeriod(animations->period);
     animations->run(isStop);
     
-    FastLED.setBrightness(brightness);
+    FastLED.setBrightness(animations->brightness);
     FastLED.show();
     
     digitalWrite(LED_BUILTIN, isStop ? LOW : HIGH);
@@ -72,10 +82,11 @@ void loop() {
 
   EVERY_N_SECONDS(5) {
     if (needsSave) {
-      EEPROM.update(BRIGHT_ADDR, brightness);
+      EEPROM.update(BRIGHT_ADDR, animations->brightness);
       EEPROM.update(MODE_ADDR, animations->mode);
-      EEPROM.update(HUE_ADDR, animations->hue);
+      EEPROM.update(COLOR_ADDR, animations->color);
       EEPROM.update(SPEED_ADDR, animations->speed);
+      EEPROM.put(PATTERN_ADDR, animations->pattern);
       needsSave = false;
     }
   }
@@ -83,7 +94,8 @@ void loop() {
 
 void processCommand(Stream* serial) {
   if (serial->available() > 0) {
-    CmdBuffer<32> cmdBuffer;
+    static CmdBuffer<CMD_BUFFER_SIZE> cmdBuffer;
+    cmdParser.setOptKeyValue(true);
 
     if (cmdBuffer.readFromSerial(serial, 2000)) {
       if (cmdParser.parseCmd(cmdBuffer.getBuffer(), cmdBuffer.getBufferSize()) != CMDPARSER_ERROR) {
@@ -96,17 +108,17 @@ void processCommand(Stream* serial) {
           printOn(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("BRIGHT"))) {
-          brightness = atoi(cmdParser.getCmdParam(1));
+          animations->setBrightness(atoi(cmdParser.getCmdParam(1)));
           needsSave = true;
           printBright(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("BRIGHT+"))) {
-          brightness = qadd8(brightness, BRIGHTNESS_STEP);
+         animations->setBrightness(qadd8(animations->brightness, BRIGHTNESS_STEP));
           needsSave = true;
           printBright(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("BRIGHT-"))) {
-          brightness = qsub8(brightness, BRIGHTNESS_STEP);
+          animations->setBrightness(qsub8(animations->brightness, BRIGHTNESS_STEP));
           needsSave = true;
           printBright(serial);
         }
@@ -125,20 +137,20 @@ void processCommand(Stream* serial) {
           needsSave = true;
           printMode(serial);
         }
-        else if (cmdParser.equalCommand_P(PSTR("HUE"))) {
-          animations->setHue(getHue(cmdParser.getCmdParam(1)));
+        else if (cmdParser.equalCommand_P(PSTR("COLOR"))) {
+          animations->setColor(getColor(cmdParser.getCmdParam(1)));
           needsSave = true;
-          printHue(serial);
+          printColor(serial);
         }
-        else if (cmdParser.equalCommand_P(PSTR("HUE+"))) {
-          animations->setHue(Hues((animations->hue + 1) % NUM_HUES));
+        else if (cmdParser.equalCommand_P(PSTR("COLOR+"))) {
+          animations->setColor(Colors((animations->color + 1) % NUM_COLORS));
           needsSave = true;
-          printHue(serial);
+          printColor(serial);
         }
-        else if (cmdParser.equalCommand_P(PSTR("HUE-"))) {
-          animations->setHue(Hues(animations->hue == 0 ? NUM_HUES - 1 : animations->hue - 1));
+        else if (cmdParser.equalCommand_P(PSTR("COLOR-"))) {
+          animations->setColor(Colors(animations->color == 0 ? NUM_COLORS - 1 : animations->color - 1));
           needsSave = true;
-          printHue(serial);
+          printColor(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("SPEED"))) {
           animations->setSpeed(atof(cmdParser.getCmdParam(1)));
@@ -146,55 +158,80 @@ void processCommand(Stream* serial) {
           printSpeed(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("SPEED+"))) {
-          animations->setSpeed(animations->speed + SPEED_STEP);
+          animations->setSpeed(qadd8(animations->speed, SPEED_STEP));
           needsSave = true;
           printSpeed(serial);
         }
         else if (cmdParser.equalCommand_P(PSTR("SPEED+"))) {
-          animations->setSpeed(animations->speed - SPEED_STEP);
+          animations->setSpeed(qsub8(animations->speed, SPEED_STEP));
           needsSave = true;
           printSpeed(serial);
+        }
+        else if (cmdParser.equalCommand_P(PSTR("PATTERN"))) {
+          if (parseCustomPattern(&(animations->pattern),
+              cmdParser.getValueFromKey_P(PSTR("C")),
+              cmdParser.getValueFromKey_P(PSTR("A")),
+              cmdParser.getValueFromKey_P(PSTR("Z"))) != CUSTOM_PATTERN_ERROR) {
+            animations->setMode(M_PATTERN);
+            needsSave = true;
+            printPattern(serial);
+          }
+          else {
+            serial->println(F("PATTERN_ERROR"));
+          }
         }
         else if (cmdParser.equalCommand_P(PSTR("STATE"))) {
           printOn(serial);
           printBright(serial);
           printMode(serial);
-          printHue(serial);
+          printColor(serial);
           printSpeed(serial);
+          printPattern(serial);
         }
         else {
-          serial->println(F("UNKNOWN COMMAND"));
+          serial->println(F("UNKNOWN_COMMAND"));
         }
       } else {
-        serial->println(F("COMMAND ERROR"));
+        serial->println(F("COMMAND_ERROR"));
       }
     } else {
-      serial->println(F("READ ERROR"));
+      serial->println(F("READ_ERROR"));
     }
   }
 }
 
 void printOn(Stream* serial) {
-  serial->print(F("ON="));
+  serial->print(F("ON"));
+  serial->print(F(" "));
   serial->println(isStop ? F("0") : F("1"));
 }
 
 void printBright(Stream* serial) {
-  serial->print(F("BRIGHT="));
-  serial->println(brightness);
+  serial->print(F("BRIGHT"));
+  serial->print(F(" "));
+  serial->println(animations->brightness);
 }
 
 void printMode(Stream* serial) {
-  serial->print(F("MODE="));
+  serial->print(F("MODE"));
+  serial->print(F(" "));
   serial->println(getModeStr(animations->mode));
 }
 
-void printHue(Stream* serial) {
-  serial->print(F("HUE="));
-  serial->println(getHueStr(animations->hue));
+void printColor(Stream* serial) {
+  serial->print(F("COLOR"));
+  serial->print(F(" "));
+  serial->println(getColorStr(animations->color));
 }
 
 void printSpeed(Stream* serial) {
-  serial->print(F("SPEED="));
+  serial->print(F("SPEED"));
+  serial->print(F(" "));
   serial->println(animations->speed);
+}
+
+void printPattern(Stream* serial) {
+  serial->print(F("PATTERN"));
+  serial->print(F(" "));
+  serial->println(getPatternStr(&animations->pattern));
 }

@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-import './HM10Device.dart';
-import './mock/BluetoothDeviceMock.dart';
+import 'mock/BluetoothDeviceMock.dart';
+import 'HM10Device.dart';
 import 'constants.dart';
 
 class DiscoveryPage extends StatefulWidget {
@@ -42,13 +42,12 @@ class _DiscoveryPage extends State<DiscoveryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            _isDiscovering ? Text('Searching devices') : Text('Found devices'),
+        title: _isDiscovering ? const Text('Searching devices') : const Text('Found devices'),
         actions: [
           _isDiscovering
               ? Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                       ),
@@ -56,13 +55,13 @@ class _DiscoveryPage extends State<DiscoveryPage> {
                       height: 24,
                     ),
                     IconButton(
-                      icon: Icon(Icons.stop),
+                      icon: const Icon(Icons.stop),
                       onPressed: _stopDiscovery,
                     ),
                   ],
                 )
               : IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: _startDiscovery,
                 ),
         ],
@@ -115,10 +114,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     }
 
     FlutterBlue.instance.connectedDevices.then((devices) {
-      _addScanResults(devices
-          .map((device) =>
-              ScanResult(device: device, rssi: 0, advertisementData: null))
-          .toList());
+      _addScanResults(devices.map((device) => ScanResult(device: device, rssi: 0, advertisementData: null)).toList());
     });
 
     _devicesSubscription = FlutterBlue.instance.scanResults.listen((results) {
@@ -143,6 +139,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     }
   }
 
+  /// Adds devices to scan results and sort by signal strength
   void _addScanResults(List<ScanResult> results) {
     if (this.mounted) {
       setState(() {
@@ -164,7 +161,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     HM10Device _device = await _connectDevice(device);
 
     if (_device == null) {
-      _showAlert();
+      _alertConnectionError();
     } else {
       Navigator.of(context).pop(_device);
     }
@@ -184,10 +181,8 @@ class _DiscoveryPage extends State<DiscoveryPage> {
 
     List<BluetoothService> services = await device.discoverServices();
 
-    BluetoothService service = services.firstWhere(
-        (service) =>
-            service.uuid.toString().toUpperCase() == HM_10_SERVICE_UUID,
-        orElse: () => null);
+    BluetoothService service = services
+        .firstWhere((service) => service.uuid.toString().toUpperCase() == HM_10_SERVICE_UUID, orElse: () => null);
 
     if (service == null) {
       print('Service not found');
@@ -198,9 +193,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     List<BluetoothCharacteristic> characteristics = service.characteristics;
 
     BluetoothCharacteristic characteristic = characteristics.firstWhere(
-        (characteristic) =>
-            characteristic.uuid.toString().toUpperCase() ==
-            HM_10_CHARACTERISTIC_UUID,
+        (characteristic) => characteristic.uuid.toString().toUpperCase() == HM_10_CHARACTERISTIC_UUID,
         orElse: () => null);
 
     if (characteristic == null) {
@@ -215,24 +208,21 @@ class _DiscoveryPage extends State<DiscoveryPage> {
   }
 
   /// Displays connection error
-  void _showAlert() async {
+  void _alertConnectionError() async {
     return showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Unable to connect'),
-          content:
-              Text('The device does not respond or is not a HM-10 module.'),
-          actions: [
-            FlatButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      child: AlertDialog(
+        title: const Text('Unable to connect'),
+        content: const Text('The device does not respond or is not a HM-10 module.'),
+        actions: [
+          FlatButton(
+            child: const Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -241,8 +231,7 @@ class _DiscoveryPage extends State<DiscoveryPage> {
     if (_tryLastDevice) {
       BluetoothDevice device = devices
           .map((result) => result.device)
-          .firstWhere((device) => device.id.toString() == widget.lastDevice,
-              orElse: () => null);
+          .firstWhere((device) => device.id.toString() == widget.lastDevice, orElse: () => null);
 
       if (device != null) {
         _tryLastDevice = false;

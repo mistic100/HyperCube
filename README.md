@@ -89,7 +89,7 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `GRADIENT`
 - `MODE+` to use the next mode
 - `MODE-` to use the previous mode
-- `HUE X` to change the current hue, hues are:
+- `COLOR X` to change the current color, hues are:
 	- `RAINBOW`
 	- `RED`
 	- `YELLOW`
@@ -97,18 +97,29 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `BLUE`
 	- `PINK`
 	- `WHITE`
-- `HUE+` to use the next hue
-- `HUE-` to use the previous hue
+- `COLOR+` to use the next color
+- `COLOR-` to use the previous color
 - `SPEED X` (X=1-10) to change the speed
 - `SPEED+` to increase the speed by 1
 - `SPEED-` to decrease the speed by 1
+- `PATTERN [A=X] [Z=X] C=X` use a custom color pattern
+	- `A=X` (X=0-1): animate the pattern (uses current `SPEED`)
+	- `Z=X` (X=1-10): display the full pattern all at once or only a smaller portion
+	- `C=X`: definition of up to 16 color stops, three character each, from `000` to `FFF`
 
+#### Examples of custom color pattern
+
+- `C=f00`: All red
+- `A=1 C=000FFF`: Animated Black/White gradient
+- `C=000FFF000FFF000FFF000FFF000FFF`: Static checker
+- `A=1 Z=5 C=F0000F`: Animated Red/Blue gradient with zoom applied
+- `A=1 Z=10 C=5F55F500000055F000`: Pulsating Green/Blue
 
 ## Application
 
 A flutter application (Android only) allows to control the light from your smartphone. It is only compatible with HM-10 Bluetooth modules.
 
-![app](Images/app.png)
+![app](Images/app.png) ![app-pattern](Images/app-pattern.png) ![app-console](Images/app-console.png)
 
 
 ## License

@@ -3,8 +3,9 @@
 #include <FastLED.h>
 #include "constants.h"
 #include "modes.h"
-#include "hues.h"
+#include "colors.h"
 #include "functions.h"
+#include "custom.h"
 
 struct Drop {
   CRGB color;
@@ -19,10 +20,14 @@ class Animations {
     CRGB leds[NUM_LEDS];
     // current animation
     enum Modes mode = M_RAINBOW;
-    // current hue
-    enum Hues hue = H_RAINBOW;
+    // current color
+    enum Colors color = H_RAINBOW;
     // current speed
-    int speed = 5;
+    uint8_t speed = SPEED_BASE;
+    // current brightness
+    uint8_t brightness = BRIGHTNESS_BASE;
+    // pattern
+    CustomPattern pattern;
     // loop period in ms
     int period;
     // displayed palette
@@ -30,9 +35,9 @@ class Animations {
     // target palette for blending
     CRGBPalette16 targetPalette;
     // palette offset
-    int paletteIndex;
+    uint8_t paletteIndex;
     // color index
-    int colorIndex;
+    uint8_t colorIndex;
 
     void run(boolean isStop) {
       if (isStop) {
@@ -68,82 +73,126 @@ class Animations {
         case M_GRADIENT:
           runGradient();
           break;
+
+        case M_PATTERN:
+          runPattern();
+          break;
       }
     }
 
     void setMode(enum Modes newMode) {
       mode = newMode;
-      period = 20 * speed / 10.0;
       paletteIndex = 0;
       colorIndex = 0;
+
+      setBrightness(brightness);
+      setSpeed(speed);
+      setColor(color);
       
       fill_solid(leds, NUM_LEDS, CRGB::Black);
       
       switch (mode) {
+        case M_GRADIENT:
+          palette = CRGBPalette16(CRGB::Black);
+          break;
+
+        case M_PATTERN:
+          if (pattern.nbStops == 0) {
+            palette = CRGBPalette16(CRGB::Black);
+          }
+          else if (pattern.nbStops == 1) {
+            palette = CRGBPalette16(pattern.stops[0], pattern.stops[0]);
+          }
+          else {
+            // building CRGBPalette16 with variable number of stops
+            palette = CRGBPalette16();
+            
+            double step = 16.0 / (pattern.nbStops - 1);
+            double previous = 0.0;
+            double next = 0.0;
+      
+            for (uint8_t i = 1; i < pattern.nbStops; i++) {
+              next+= step;
+              fill_gradient_RGB(&(palette.entries[0]), previous, pattern.stops[i - 1], next, pattern.stops[i]);
+              previous = next;
+            }
+          }
+          break;
+
+        case M_PATTERN:
+          if (pattern.nbStops == 0) {
+            palette = CRGBPalette16(CRGB::Black);
+          }
+          else if (pattern.nbStops == 1) {
+            palette = CRGBPalette16(pattern.stops[0], pattern.stops[0]);
+          }
+          else {
+            // building CRGBPalette16 with variable number of stops
+            palette = CRGBPalette16();
+            
+            double step = 16.0 / (pattern.nbStops - 1);
+            double previous = 0.0;
+            double next = 0.0;
+      
+            for (int i = 1; i < pattern.nbStops; i++) {
+              next+= step;
+              fill_gradient_RGB(&(palette.entries[0]), previous, pattern.stops[i - 1], next, pattern.stops[i]);
+              previous = next;
+            }
+          }
+          break;
+      }
+    }
+
+    void setColor(enum Colors newColor) {
+      color = newColor;
+
+      switch (mode) {
         case M_RAINBOW:
-          palette = getPalette(hue);
-          break;
-        
-        case M_RAINDROP:
-        case M_CYLON:
-        case M_PULSE:
-          period *= 7;
-          break;
-          
-        case M_CHASER:
-          period *= 5;
+          palette = getPalette(color);
           break;
 
         case M_GRADIENT:
-          palette = CRGBPalette16(CRGB::Black, CRGB::Black);
           targetPalette = CRGBPalette16(randomColor(), randomColor());
           break;
       }
     }
 
-    void setHue(enum Hues newHue) {
-      hue = newHue;
-
-      switch (mode) {
-        case M_RAINBOW:
-          palette = getPalette(hue);
-          break;
-
-        case M_GRADIENT:
-          targetPalette = CRGBPalette16(randomColor(), randomColor());
-          break;
-      }
-    }
-
-    void setSpeed(double newSpeed) {
-      speed = max(min(newSpeed, SPEED_MAX), SPEED_MIN);
-      period = 20 * speed / 10.0;
+    void setSpeed(uint8_t newSpeed) {
+      speed = max(min(newSpeed, 10), 1);
+      // maps 1-10 to 1024-2
+      period = 1 << (11 - newSpeed);
 
       switch (mode) {
         case M_RAINDROP:
         case M_CYLON:
         case M_PULSE:
-          period *= 7;
+          period *= 8;
           break;
           
         case M_CHASER:
-          period *= 5;
+          period *= 6;
           break;
       }
+    }
+
+    void setBrightness(uint8_t newBrightness) {
+      brightness = newBrightness;
     }
 
   private:
     /** UTILITIES */
 
-    void showPalette(int endIndex) {
-      for (int i = 0; i < endIndex; i++) {
-        uint8_t index = 255.0 * i / endIndex;
-        leds[i] = ColorFromPalette(palette, index + paletteIndex, 255, LINEARBLEND);
+    void showPalette(uint8_t endIndex, uint8_t scale = 255) {
+      for (uint8_t i = 0; i < endIndex; i++) {
+        // 240 is 16x15, hi-bit is 15, low-bit is 0, this prevents ColorFromPalette to perform blending with the first color
+        uint8_t index = min(1.0 * scale * i / (endIndex - 1), 240);
+        leds[i] = ColorFromPalette(palette, index + paletteIndex);
       }
     }
 
     void symetrizeSides() {
-      for (int i = 0; i < NUM_LEDS_SIDE; i++) {
+      for (uint8_t i = 0; i < NUM_LEDS_SIDE; i++) {
         leds[NUM_LEDS_SIDE * 2 - 1 - i] = leds[i];
         leds[NUM_LEDS_SIDE * 2 + i] = leds[i];
         leds[NUM_LEDS_SIDE * 4 - 1 - i] = leds[i];
@@ -151,26 +200,21 @@ class Animations {
     }
 
     void duplicateSides() {
-      for (int i = 0; i < NUM_LEDS_SIDE; i++) {
+      for (uint8_t i = 0; i < NUM_LEDS_SIDE; i++) {
         leds[NUM_LEDS_SIDE + i] = leds[i];
         leds[NUM_LEDS_SIDE * 2 + i] = leds[i];
         leds[NUM_LEDS_SIDE * 3 + i] = leds[i];
       }
     }
 
-    void fade(int fade, int endIndex) {
-      for (int i = 0; i < endIndex; i++) {
+    void fade(uint8_t fade, uint8_t endIndex) {
+      for (uint8_t i = 0; i < endIndex; i++) {
         leds[i].nscale8(fade);
       }
     }
 
-    CRGB nextColor(int inc) {
+    CRGB nextColor(uint8_t inc) {
       colorIndex+= inc;
-
-      if (colorIndex >= 255) {
-        colorIndex-= 255;
-      }
-      
       return colorFromPalette(colorIndex);
     }
 
@@ -178,12 +222,12 @@ class Animations {
       return colorFromPalette(random8());
     }
 
-    CRGB colorFromPalette(int value) {
-      return ColorFromPalette(getPalette(hue), value, 255, LINEARBLEND);
+    CRGB colorFromPalette(uint8_t value) {
+      return ColorFromPalette(getPalette(color), min(value, 240));
     }
 
-    void showDrops(Drop drops[], int *nbDrops, int endIndex) {
-      for (int i = 0; i < *nbDrops;) {
+    void showDrops(Drop drops[], uint8_t *nbDrops, uint8_t endIndex) {
+      for (uint8_t i = 0; i < *nbDrops;) {
         // move each drop
         if (drops[i].dir) {
           drops[i].pos--;
@@ -193,7 +237,7 @@ class Animations {
 
         // remove drops on ends
         if (drops[i].pos == -1 || drops[i].pos == endIndex) {
-          for (int j=i; j<*nbDrops-1; j++) {
+          for (uint8_t j=i; j<*nbDrops-1; j++) {
               drops[j] = drops[j + 1];
           }
           (*nbDrops)--;
@@ -209,28 +253,25 @@ class Animations {
     /** ANIMATIONS */
 
     void runRainbow() {
-      paletteIndex = paletteIndex + 1;
+      paletteIndex+= 1;
       
       showPalette(NUM_LEDS_SIDE);
       symetrizeSides();
     }
 
     void runPulse() {
-      static int nbDrops = 0;
+      static uint8_t nbDrops = 0;
+      static boolean run = true;
       static Drop drops[2];
 
-      EVERY_N_MILLIS_I(timer, 350) {
-        timer.setPeriod(700 * speed / 10.0);
-        
-        if (nbDrops < 2) {
-          Drop newDrop = {
-            .color = nextColor(20),
-            .dir = false,
-            .pos = -1,
-          };
-          drops[nbDrops] = newDrop;
-          nbDrops++;
-        }
+      if (nbDrops == 0 || drops[0].pos == 5) {
+        Drop newDrop = {
+          .color = nextColor(20),
+          .dir = false,
+          .pos = -1,
+        };
+        drops[nbDrops] = newDrop;
+        nbDrops++;
       }
 
       fade(180, NUM_LEDS_SIDE);
@@ -266,12 +307,12 @@ class Animations {
     }
 
     void runRaindrop() {
-      static int nbDrops = 0;
+      static uint8_t nbDrops = 0;
       static Drop drops[4];
 
       // randomly add a new drop
       if (nbDrops < 4) {
-        int rnd = random8();
+        uint8_t rnd = random8();
         if (rnd < 48) {
           Drop newDrop = {
             .color = randomColor(),
@@ -308,8 +349,8 @@ class Animations {
     void runNoise() {
       fade(250, NUM_LEDS);
 
-      EVERY_N_MILLIS_I(timer, 30) {
-        timer.setPeriod(60 * speed / 10.0);
+      EVERY_N_MILLIS_I(timer, period * 4) {
+        timer.setPeriod(period * 4);
         leds[random8(0, NUM_LEDS)] += randomColor();
       }
     }
@@ -323,20 +364,38 @@ class Animations {
         nblendPaletteTowardPaletteReverse(palette, targetPalette, 12);
       }
   
-      EVERY_N_MILLIS_I(timer, 2000) {
-        timer.setPeriod(4000 * speed / 10.0);
+      EVERY_N_MILLIS_I(timer, period * 400) {
+        timer.setPeriod(period * 400);
         
         if (odd) {
-          targetPalette = CRGBPalette16(palette[0], randomColor());
+          targetPalette = CRGBPalette16(randomColor(), palette[15]);
         }
         else {
-          targetPalette = CRGBPalette16(randomColor(), palette[15]);
+          targetPalette = CRGBPalette16(palette[0], randomColor());
         }
   
         odd = !odd;
       }
   
       showPalette(NUM_LEDS_SIDE);
+      symetrizeSides();
+    }
+
+
+    void runPattern() {
+      if (pattern.animate) {
+        paletteIndex+= 1;
+      }
+
+      // special case when exactly one color for each LED
+      if (pattern.nbStops == NUM_LEDS_SIDE && pattern.zoom == 1) {
+        for (uint8_t i = 0; i < NUM_LEDS_SIDE; i++) {
+          leds[i] = pattern.stops[(i + paletteIndex) % NUM_LEDS_SIDE];
+        }
+      } else {
+        uint8_t scale = changeScale(pattern.zoom, 10, 1, 1, 255);
+        showPalette(NUM_LEDS_SIDE, scale);
+      }
       symetrizeSides();
     }
 

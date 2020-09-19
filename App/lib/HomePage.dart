@@ -4,9 +4,9 @@ import 'package:hyper_cube/constants.dart';
 import 'package:system_setting/system_setting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import './DiscoveryPage.dart';
-import './ControlPage.dart';
-import './HM10Device.dart';
+import 'DiscoveryPage.dart';
+import 'ControlPage.dart';
+import 'HM10Device.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -42,13 +42,11 @@ class _HomePage extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('HyperCube'),
+        title: const Text('HyperCube'),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
-          : _bluetoothState != BluetoothState.on
-              ? _buildEnableBluetooth()
-              : _buildSelectDevice(),
+          : _bluetoothState != BluetoothState.on ? _buildEnableBluetooth() : _buildSelectDevice(),
     );
   }
 
@@ -65,7 +63,7 @@ class _HomePage extends State<HomePage> {
               shape: CircleBorder(),
             ),
             child: IconButton(
-              icon: Icon(Icons.bluetooth),
+              icon: const Icon(Icons.bluetooth),
               color: Theme.of(context).colorScheme.onPrimary,
               iconSize: 80,
               onPressed: () {
@@ -74,9 +72,11 @@ class _HomePage extends State<HomePage> {
             ),
           ),
           Divider(),
-          Text("Please enable Bluetooth",
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headline6),
+          Text(
+            'Please enable Bluetooth',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headline6,
+          ),
         ],
       ),
     );
@@ -92,7 +92,7 @@ class _HomePage extends State<HomePage> {
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
         ),
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         color: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(40),
