@@ -118,29 +118,6 @@ class Animations {
             }
           }
           break;
-
-        case M_PATTERN:
-          if (pattern.nbStops == 0) {
-            palette = CRGBPalette16(CRGB::Black);
-          }
-          else if (pattern.nbStops == 1) {
-            palette = CRGBPalette16(pattern.stops[0], pattern.stops[0]);
-          }
-          else {
-            // building CRGBPalette16 with variable number of stops
-            palette = CRGBPalette16();
-            
-            double step = 16.0 / (pattern.nbStops - 1);
-            double previous = 0.0;
-            double next = 0.0;
-      
-            for (int i = 1; i < pattern.nbStops; i++) {
-              next+= step;
-              fill_gradient_RGB(&(palette.entries[0]), previous, pattern.stops[i - 1], next, pattern.stops[i]);
-              previous = next;
-            }
-          }
-          break;
       }
     }
 
