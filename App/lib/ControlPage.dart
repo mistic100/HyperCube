@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hyper_cube/utils.dart';
 import 'package:provider/provider.dart';
 
 import 'controls/ControlColor.dart';
@@ -26,6 +27,7 @@ class _ControlPage extends State<ControlPage> {
   Timer _stateTimer;
   StreamSubscription _stateSubsription;
   String _buffer = "";
+  String _command = "";
 
   @override
   void dispose() {
@@ -50,7 +52,7 @@ class _ControlPage extends State<ControlPage> {
       ],
       builder: (context, _) {
         var onCommand = (value) {
-          _send(context.read<Logs>(), value);
+          _pushCommand(context.read<Logs>(), value);
         };
 
         _startStatesubscription(
@@ -115,26 +117,36 @@ class _ControlPage extends State<ControlPage> {
       });
       widget.device.characteristic.setNotifyValue(true);
 
-      _send(logs, "STATE");
-      _stateTimer = new Timer.periodic(Duration(seconds: 10), (timer) {
-        _send(logs, "STATE");
-      });
+      _pushCommand(logs, "STATE");
     }
   }
 
-  /// Send data to the device
-  void _send(Logs logs, String data) {
+  /// Try to open command transaction
+  void _pushCommand(Logs logs, String data) async {
     if (data.isEmpty) {
       return;
     }
 
     print("$data");
-    logs.appendLog("$data\n");
+    logs.appendLog("> $data\n");
+
+    await _send("###");
+    _command = "$data\n";
+  }
+
+  /// Send data to the device
+  Future<void> _send(String command) async {
+    if (command.isEmpty) {
+      return;
+    }
 
     try {
-      widget.device.characteristic.write(utf8.encode("$data\n"));
+      await Future.forEach(splitByLength(command, 20), (part) async {
+        await widget.device.characteristic.write(utf8.encode(part));
+      });
     } catch (e) {
       print(e.toString());
+      widget.device.characteristic.write(utf8.encode("\n"));
     }
   }
 
@@ -148,39 +160,45 @@ class _ControlPage extends State<ControlPage> {
 
     if (_buffer[_buffer.length - 1] == '\n') {
       print(_buffer);
-      logs.appendLog(value);
 
-      _buffer
-          .split('\n')
-          .where((element) => element != null && element.isNotEmpty)
-          .map((element) => element.trim().split(' '))
-          .forEach((parts) {
-        switch (parts[0]) {
-          case 'ON':
-            model.setIsOn(parts[1] == '1');
-            break;
+      if (_buffer.startsWith('OK')) {
+        _send(_command);
+        _command = "";
+      } else {
+        logs.appendLog(_buffer);
 
-          case 'BRIGHT':
-            model.setBrightness(double.parse(parts[1]));
-            break;
+        _buffer
+            .split('\n')
+            .where((element) => element != null && element.isNotEmpty)
+            .map((element) => element.trim().split(' '))
+            .forEach((parts) {
+          switch (parts[0]) {
+            case 'ON':
+              model.setIsOn(parts[1] == '1');
+              break;
 
-          case 'MODE':
-            model.setMode(parts[1]);
-            break;
+            case 'BRIGHT':
+              model.setBrightness(double.parse(parts[1]));
+              break;
 
-          case 'COLOR':
-            model.setColor(parts[1]);
-            break;
+            case 'MODE':
+              model.setMode(parts[1]);
+              break;
 
-          case 'SPEED':
-            model.setSpeed(double.parse(parts[1]));
-            break;
+            case 'COLOR':
+              model.setColor(parts[1]);
+              break;
 
-          case 'PATTERN':
-            model.setPattern(CustomPattern.fromString(parts.sublist(1)));
-            break;
-        }
-      });
+            case 'SPEED':
+              model.setSpeed(double.parse(parts[1]));
+              break;
+
+            case 'PATTERN':
+              model.setPattern(CustomPattern.fromString(parts.sublist(1)));
+              break;
+          }
+        });
+      }
 
       _buffer = "";
     }

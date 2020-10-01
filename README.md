@@ -63,8 +63,8 @@ The following diagram shows one way to arrange strips (flattened cube seen from 
 
 Edit the `constants.h` file according to your wiring :
 
-- `PIN_LED` output pin use to control LEDS
-- `PIN_BUTTON` input pin for the control button
+- `LED_PIN` output pin use to control LEDS
+- `BUTTON_PIN` input pin for the control button
 - `BLE_RXD` RX pin for the BLE module
 - `BLE_TXD` TX pin for the BLE module
 
@@ -72,7 +72,7 @@ Edit `MAX_MILLI_AMPS` according to the rating of your power supply (keep a safet
 
 ### Controls
 
-The cube is controlled via Bluetooth and can received basic serial commands:
+The cube is controlled via USB and Bluetooth and can received basic serial commands (`\n` terminated):
 
 - `ON` to turn on the light
 - `OFF` to turn off the light
@@ -106,6 +106,9 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 	- `A=X` (X=0-1): animate the pattern (uses current `SPEED`)
 	- `Z=X` (X=1-10): display the full pattern all at once or only a smaller portion
 	- `C=X`: definition of up to 16 color stops, three character each, from `000` to `FFF`
+	
+*Note*: When controlled over Bluetooth, the controller must send a single `#` char and wait for the `OK` response before sending the command.
+This is done to pause the FastLED processing and have enough CPU cycles to consume the larger request.
 
 #### Examples of custom color pattern
 
@@ -114,6 +117,9 @@ The cube is controlled via Bluetooth and can received basic serial commands:
 - `C=000FFF000FFF000FFF000FFF000FFF`: Static checker
 - `A=1 Z=5 C=F0000F`: Animated Red/Blue gradient with zoom applied
 - `A=1 Z=10 C=5F55F500000055F000`: Pulsating Green/Blue
+
+*Note*: Commands over 20 chars long must be splitted into multiple packets, by limitation of the Serial over Bluetooth protocol.
+Only the last packet will be `\n` terminated.
 
 ## Application
 
@@ -124,4 +130,4 @@ A flutter application (Android only) allows to control the light from your smart
 
 ## License
 
-The SolidWorks files and Arduino code are distributed under the Creative Commons 3.0 BY-SA license.
+The SolidWorks files, Arduino code and Flutter code are distributed under the Creative Commons 3.0 BY-SA license.

@@ -3,6 +3,7 @@
 #include "constants.h"
 
 #define CUSTOM_PATTERN_ERROR 1
+
 #define CUSTOM_PATTERN_VERSION 3
 #define CUSTOM_PATTERN_MAX_STOP 16
 

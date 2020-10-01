@@ -26,6 +26,8 @@ class Animations {
     uint8_t speed = SPEED_BASE;
     // current brightness
     uint8_t brightness = BRIGHTNESS_BASE;
+    // on/off state
+    boolean isOff = false;
     // pattern
     CustomPattern pattern;
     // loop period in ms
@@ -39,9 +41,17 @@ class Animations {
     // color index
     uint8_t colorIndex;
 
-    void run(boolean isStop) {
-      if (isStop) {
-        fill_solid(leds, NUM_LEDS, CRGB::Black);
+    void off() {
+      isOff = true;
+      fill_solid(leds, NUM_LEDS, CRGB::Black);
+    }
+
+    void on() {
+      isOff = false;
+    }
+
+    void run() {
+      if (isOff) {
         return;
       }
 

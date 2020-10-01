@@ -100,6 +100,8 @@ class _DiscoveryPage extends State<DiscoveryPage> {
 
   /// Starts devices discovery
   Future<void> _startDiscovery() async {
+    await _stopDiscovery();
+
     setState(() {
       devices.clear();
       _isDiscovering = true;

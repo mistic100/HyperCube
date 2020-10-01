@@ -181,7 +181,7 @@ class Logs with ChangeNotifier {
   void appendLog(String value) {
     value.split('\n').where((v) => v.isNotEmpty).forEach((v) => _logs.add(v));
 
-    while (_logs.length > 50) {
+    while (_logs.length > 100) {
       _logs.removeAt(0);
     }
 

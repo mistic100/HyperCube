@@ -6,22 +6,24 @@
 #define LED_TYPE WS2812
 #define COLOR_ORDER GRB
 #define MAX_MILLI_AMPS 8000
-#define PIN_LED 6
+#define LED_PIN 6
 
 // Button config
-#define PIN_BUTTON A0
-#define THRES_BUTTON 1
+#define BUTTON_PIN A0
+#define BUTTON_THRES 2
 
 // BLE config
 #define BLE_RXD 2
 #define BLE_TXD 3
+#define BLE_BAUD 9600
+#define BLE_CTRL_CHAR '#'
 
 // EEPROM config
-#define BRIGHT_ADDR 0
-#define MODE_ADDR 1
-#define COLOR_ADDR 2
-#define SPEED_ADDR 3
-#define PATTERN_ADDR 64
+#define ADDR_BRIGHT 0
+#define ADDR_MODE 1
+#define ADDR_COLOR 2
+#define ADDR_SPEED 3
+#define ADDR_PATTERN 64
 
 // Other config
 #define BRIGHTNESS_STEP 16
