@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 import 'package:hyper_cube/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -24,15 +25,15 @@ class ControlPage extends StatefulWidget {
 }
 
 class _ControlPage extends State<ControlPage> {
-  Timer _stateTimer;
-  StreamSubscription _stateSubsription;
+  StreamSubscription _stateSubscription;
+  StreamSubscription _valueSubscription;
   String _buffer = "";
   String _command = "";
 
   @override
   void dispose() {
-    _stateTimer.cancel();
-    _stateSubsription.cancel();
+    _valueSubscription.cancel();
+    _stateSubscription.cancel();
 
     widget.device.device.disconnect();
 
@@ -55,7 +56,7 @@ class _ControlPage extends State<ControlPage> {
           _pushCommand(context.read<Logs>(), value);
         };
 
-        _startStatesubscription(
+        _startSubscription(
             Provider.of<HyperCube>(context, listen: false), //
             Provider.of<Logs>(context, listen: false));
 
@@ -110,9 +111,15 @@ class _ControlPage extends State<ControlPage> {
   }
 
   /// listen to device data
-  void _startStatesubscription(HyperCube model, Logs logs) {
-    if (_stateSubsription == null) {
-      _stateSubsription = widget.device.characteristic.value.listen((value) {
+  void _startSubscription(HyperCube model, Logs logs) {
+    if (_valueSubscription == null) {
+      _stateSubscription = widget.device.device.state.listen((event) {
+        if (event != BluetoothDeviceState.connected) {
+          Navigator.of(context).pop();
+        }
+      });
+
+      _valueSubscription = widget.device.characteristic.value.listen((value) {
         _parseValue(model, logs, utf8.decode(value));
       });
       widget.device.characteristic.setNotifyValue(true);

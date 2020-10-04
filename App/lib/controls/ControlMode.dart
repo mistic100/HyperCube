@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../utils.dart';
 import '../model.dart';
 import 'AbstractControl.dart';
 
-var MODES = [
+const MODES = [
   {'name': 'RAINBOW'},
   {'name': 'RAINDROP'},
   {'name': 'PULSE'},
@@ -26,7 +27,7 @@ class ControlMode extends AbstractControl {
         items: MODES
             .map((e) => DropdownMenuItem(
                   value: e['name'],
-                  child: Text(e['name']),
+                  child: Text(e['name'].capitalize()),
                 ))
             .toList(),
         value: model.mode,

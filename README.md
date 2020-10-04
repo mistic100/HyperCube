@@ -103,7 +103,7 @@ The cube is controlled via USB and Bluetooth and can received basic serial comma
 - `SPEED+` to increase the speed by 1
 - `SPEED-` to decrease the speed by 1
 - `PATTERN [A=X] [Z=X] C=X` use a custom color pattern
-	- `A=X` (X=0-1): animate the pattern (uses current `SPEED`)
+	- `A=X` (X=0/F/B): animate the pattern on `F`orward or `B`ackward direction (uses current `SPEED`)
 	- `Z=X` (X=1-10): display the full pattern all at once or only a smaller portion
 	- `C=X`: definition of up to 16 color stops, three character each, from `000` to `FFF`
 	
@@ -113,10 +113,10 @@ This is done to pause the FastLED processing and have enough CPU cycles to consu
 #### Examples of custom color pattern
 
 - `C=f00`: All red
-- `A=1 C=000FFF`: Animated Black/White gradient
+- `A=F C=000FFF`: Animated Black/White gradient
 - `C=000FFF000FFF000FFF000FFF000FFF`: Static checker
-- `A=1 Z=5 C=F0000F`: Animated Red/Blue gradient with zoom applied
-- `A=1 Z=10 C=5F55F500000055F000`: Pulsating Green/Blue
+- `A=B Z=5 C=F0000F`: Animated Red/Blue gradient with zoom applied
+- `A=F Z=10 C=5F55F500000055F000`: Pulsating Green/Blue
 
 *Note*: Commands over 20 chars long must be splitted into multiple packets, by limitation of the Serial over Bluetooth protocol.
 Only the last packet will be `\n` terminated.

@@ -10,3 +10,9 @@ Iterable<String> splitByLength(String str, int length) {
 
   return result.map((e) => e.toString());
 }
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${this.substring(1).toLowerCase()}";
+  }
+}

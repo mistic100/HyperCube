@@ -7,6 +7,12 @@ import '../constants.dart';
 import '../model.dart';
 import 'AbstractControl.dart';
 
+const ANIMATIONS = [
+  {'name': '0', 'label': 'None'},
+  {'name': 'F', 'label': 'Forward'},
+  {'name': 'B', 'label': 'Backward'},
+];
+
 class ControlPattern extends AbstractControl {
   const ControlPattern({Key key, ValueChanged<String> onCommand}) : super(key: key, onCommand: onCommand);
 
@@ -70,15 +76,21 @@ class ControlPattern extends AbstractControl {
               ],
             ),
           ),
-          Divider(),
-          SwitchListTile(
-            title: const Text('Enable animation'),
-            secondary: const Icon(Icons.flip_to_back),
-            value: pattern.animate,
-            activeColor: Theme.of(context).colorScheme.primary,
-            onChanged: (bool value) {
-              pattern.setAnimate(value);
-            },
+          ListTile(
+            title: const Text('Animation'),
+            leading: const Icon(Icons.flip_to_back),
+            trailing: DropdownButton(
+              items: ANIMATIONS
+                  .map((e) => DropdownMenuItem(
+                        value: e['name'],
+                        child: Text(e['label']),
+                      ))
+                  .toList(),
+              value: pattern.animation,
+              onChanged: (value) {
+                pattern.setAnimation(value);
+              },
+            ),
           ),
           buildCardTitle(context, 'Zoom', Icons.aspect_ratio),
           buildSlider(

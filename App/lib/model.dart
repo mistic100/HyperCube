@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class CustomPattern with ChangeNotifier {
   bool _modified = false;
   List<Color> _stops = List();
-  bool _animate = true;
+  String _animation = 'F';
   double _zoom = 1;
 
   CustomPattern();
@@ -13,7 +13,7 @@ class CustomPattern with ChangeNotifier {
     sublist.map((e) => e.split('=')).forEach((parts) {
       switch (parts[0]) {
         case 'A':
-          _animate = parts[1] == '1';
+          _animation = parts[1] == '1' ? 'F' : parts[1]; // retro-compat
           break;
 
         case 'Z':
@@ -38,13 +38,13 @@ class CustomPattern with ChangeNotifier {
     });
   }
 
-  bool get animate => _animate;
+  String get animation => _animation;
   double get zoom => _zoom;
   List<Color> get stops => _stops;
 
   CustomPattern updateIfNotModified(CustomPattern other) {
     if (!_modified) {
-      _animate = other.animate;
+      _animation = other.animation;
       _zoom = other.zoom;
       _stops = List.from(other.stops);
       notifyListeners();
@@ -53,7 +53,7 @@ class CustomPattern with ChangeNotifier {
   }
 
   CustomPattern update(CustomPattern other) {
-    _animate = other.animate;
+    _animation = other.animation;
     _zoom = other.zoom;
     _stops = List.from(other.stops);
     _modified = true;
@@ -81,14 +81,14 @@ class CustomPattern with ChangeNotifier {
 
   void reset() {
     _stops.clear();
-    _animate = true;
+    _animation = 'F';
     _zoom = 1;
     _modified = true;
     notifyListeners();
   }
 
-  void setAnimate(bool animate) {
-    _animate = animate;
+  void setAnimation(String animation) {
+    _animation = animation;
     _modified = true;
     notifyListeners();
   }
@@ -105,7 +105,7 @@ class CustomPattern with ChangeNotifier {
 
   @override
   String toString() {
-    String str = "A=${_animate ? '1' : '0'} Z=${_zoom.toInt()} C=";
+    String str = "A=${_animation} Z=${_zoom.toInt()} C=";
 
     _stops.forEach((stop) {
       str += stop.red.toRadixString(16)[0];
@@ -117,7 +117,7 @@ class CustomPattern with ChangeNotifier {
   }
 }
 
-class HyperCube with ChangeNotifier, DiagnosticableTreeMixin {
+class HyperCube with ChangeNotifier {
   bool _isOn = true;
   double _brightness = 127;
   double _speed = 8;
@@ -160,16 +160,6 @@ class HyperCube with ChangeNotifier, DiagnosticableTreeMixin {
   void setPattern(CustomPattern pattern) {
     _pattern = pattern;
     notifyListeners();
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(FlagProperty("isOn", value: _isOn));
-    properties.add(DoubleProperty("brightness", _brightness));
-    properties.add(DoubleProperty("speed", _speed));
-    properties.add(StringProperty("mode", _mode));
-    properties.add(StringProperty("color", _color));
   }
 }
 

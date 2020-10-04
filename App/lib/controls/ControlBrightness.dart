@@ -15,7 +15,6 @@ class ControlBrightness extends AbstractControl {
           value: model.brightness,
           min: 0,
           max: 255,
-          divisions: 8,
           onChanged: (value) {
             model.setBrightness(value);
           },

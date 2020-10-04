@@ -102,7 +102,7 @@ class _HomePage extends State<HomePage> {
     );
   }
 
-  /// Shows the device selection page then th econtrol page
+  /// Shows the device selection page then the control page
   void _selectDevice({String lastDevice = ''}) async {
     final HM10Device selectedDevice = await Navigator.of(context).push(
       MaterialPageRoute(

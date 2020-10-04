@@ -370,8 +370,13 @@ class Animations {
 
 
     void runPattern() {
-      if (pattern.animate) {
-        paletteIndex+= 1;
+      switch (pattern.anim) {
+        case A_FORWARD:
+          paletteIndex+= 1;
+          break;
+        case A_BACKWARD:
+          paletteIndex-= 1;
+          break;
       }
 
       // special case when exactly one color for each LED

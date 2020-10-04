@@ -4,19 +4,46 @@
 
 #define CUSTOM_PATTERN_ERROR 1
 
-#define CUSTOM_PATTERN_VERSION 3
+#define CUSTOM_PATTERN_VERSION 4
 #define CUSTOM_PATTERN_MAX_STOP 16
+
+enum CustomPatternAnim {
+  A_NONE,
+  A_FORWARD,
+  A_BACKWARD
+};
+
+enum CustomPatternAnim getAnim(char* str) {
+  if (strcasecmp_P(str, PSTR("F")) == 0) {
+    return A_FORWARD;
+  }
+  if (strcasecmp_P(str, PSTR("B")) == 0) {
+    return A_BACKWARD;
+  }
+  return A_NONE;
+}
+
+String getAnimStr(enum CustomPatternAnim anim) {
+  switch (anim) {
+    case A_FORWARD:
+      return F("F");
+    case A_BACKWARD:
+      return F("B");
+    default:
+      return F("0");
+  }
+}
 
 struct CustomPattern {
   uint8_t version;
   uint8_t nbStops;
   CRGB stops[CUSTOM_PATTERN_MAX_STOP];
-  bool animate;
+  CustomPatternAnim anim;
   uint8_t zoom;
   bool hasExtraStop;
 };
 
-int parseCustomPattern(CustomPattern* pattern, char* stopsStr, char* animateStr, char* zoomStr) {
+int parseCustomPattern(CustomPattern* pattern, char* stopsStr, char* animStr, char* zoomStr) {
   if (stopsStr == NULL) {
     return CUSTOM_PATTERN_ERROR;
   }
@@ -55,7 +82,7 @@ int parseCustomPattern(CustomPattern* pattern, char* stopsStr, char* animateStr,
   pattern->version = CUSTOM_PATTERN_VERSION;
   pattern->nbStops = parsedStops;
   pattern->hasExtraStop = false;
-  pattern->animate = strcasecmp_P(animateStr, PSTR("1")) == 0;
+  pattern->anim = getAnim(animStr);
 
   if (zoomStr != NULL) {
     pattern->zoom = max(min(atoi(zoomStr), 10), 1);
@@ -63,7 +90,7 @@ int parseCustomPattern(CustomPattern* pattern, char* stopsStr, char* animateStr,
     pattern->zoom = 1;
   }
 
-  if (pattern->animate && pattern->nbStops < CUSTOM_PATTERN_MAX_STOP) {
+  if (pattern->anim != A_NONE && pattern->nbStops < CUSTOM_PATTERN_MAX_STOP) {
     pattern->stops[pattern->nbStops++] = pattern->stops[0];
     pattern->hasExtraStop = true;
   }
@@ -79,7 +106,7 @@ char* getPatternStr(CustomPattern* pattern) {
   int i = 0;
   buffer[i++] = 'A';
   buffer[i++] = '=';
-  buffer[i++] = pattern->animate ? '1' : '0';
+  buffer[i++] = getAnimStr(pattern->anim).charAt(0);
   buffer[i++] = ' ';
   buffer[i++] = 'Z';
   buffer[i++] = '=';
