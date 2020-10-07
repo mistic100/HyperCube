@@ -346,13 +346,15 @@ class Animations {
       static bool odd = false;
   
       if (odd) {
-        nblendPaletteTowardPalette(palette, targetPalette, 12);
-      } else {
         nblendPaletteTowardPaletteReverse(palette, targetPalette, 12);
+      } else {
+        nblendPaletteTowardPalette(palette, targetPalette, 12);
       }
   
       EVERY_N_MILLIS_I(timer, period * 400) {
         timer.setPeriod(period * 400);
+  
+        odd = !odd;
         
         if (odd) {
           targetPalette = CRGBPalette16(randomColor(), palette[15]);
@@ -360,10 +362,8 @@ class Animations {
         else {
           targetPalette = CRGBPalette16(palette[0], randomColor());
         }
-  
-        odd = !odd;
       }
-  
+
       showPalette(NUM_LEDS_SIDE);
       symetrizeSides();
     }

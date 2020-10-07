@@ -7,18 +7,18 @@ void nblendPaletteTowardPaletteReverse( CRGBPalette16& current, CRGBPalette16& t
     p2 = (uint8_t*)target.entries;
 
     const uint8_t totalChannels = sizeof(CRGBPalette16);
-    for( uint8_t i = totalChannels - 1; i >= 0; i--) {
+    for( uint8_t i = totalChannels; i > 0; i--) {
         // if the values are equal, no changes are needed
-        if( p1[i] == p2[i] ) { continue; }
+        if( p1[i-1] == p2[i-1] ) { continue; }
 
         // if the current value is less than the target, increase it by one
-        if( p1[i] < p2[i] ) { p1[i]++; changes++; }
+        if( p1[i-1] < p2[i-1] ) { p1[i-1]++; changes++; }
 
         // if the current value is greater than the target,
         // increase it by one (or two if it's still greater).
-        if( p1[i] > p2[i] ) {
-            p1[i]--; changes++;
-            if( p1[i] > p2[i] ) { p1[i]--; }
+        if( p1[i-1] > p2[i-1] ) {
+            p1[i-1]--; changes++;
+            if( p1[i-1] > p2[i-1] ) { p1[i-1]--; }
         }
 
         // if we've hit the maximum number of changes, exit
