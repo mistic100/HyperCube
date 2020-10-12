@@ -87,6 +87,7 @@ The cube is controlled via USB and Bluetooth and can received basic serial comma
 	- `CHASER`
 	- `NOISE`
 	- `GRADIENT`
+	- `RIPPLES`
 - `MODE+` to use the next mode
 - `MODE-` to use the previous mode
 - `COLOR X` to change the current color, hues are:

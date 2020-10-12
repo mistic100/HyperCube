@@ -12,6 +12,7 @@ const MODES = [
   {'name': 'CHASER'},
   {'name': 'NOISE'},
   {'name': 'GRADIENT'},
+  {'name': 'RIPPLES'},
   {'name': 'PATTERN'},
 ];
 

@@ -9,7 +9,7 @@
 
 struct Drop {
   CRGB color;
-  bool dir;
+  int step;
   int pos;
 };
 
@@ -82,6 +82,10 @@ class Animations {
 
         case M_GRADIENT:
           runGradient();
+          break;
+
+        case M_RIPPLES:
+          runRipples();
           break;
 
         case M_PATTERN:
@@ -160,6 +164,10 @@ class Animations {
         case M_CHASER:
           period *= 6;
           break;
+
+        case M_RIPPLES:
+          period *= 10;
+          break;
       }
     }
 
@@ -213,10 +221,20 @@ class Animations {
       return ColorFromPalette(getPalette(color), min(value, 240));
     }
 
+    int wrapIdx(int i) {
+      if (i < 0) {
+        return NUM_LEDS + i;
+      } else if (i >= NUM_LEDS) {
+        return i - NUM_LEDS;
+      } else {
+        return i;
+      }
+    }
+
     void showDrops(Drop drops[], uint8_t *nbDrops, uint8_t endIndex) {
       for (uint8_t i = 0; i < *nbDrops;) {
         // move each drop
-        if (drops[i].dir) {
+        if (drops[i].step == 1) {
           drops[i].pos--;
         } else {
           drops[i].pos++;
@@ -254,7 +272,7 @@ class Animations {
       if (nbDrops == 0 || drops[0].pos == 5) {
         Drop newDrop = {
           .color = nextColor(20),
-          .dir = false,
+          .step = 0,
           .pos = -1,
         };
         drops[nbDrops] = newDrop;
@@ -269,22 +287,22 @@ class Animations {
     void runCylon() {
       static Drop drop = {
         .color = CRGB::Black,
-        .dir = false,
+        .step = 0,
         .pos = -1,
       };
 
       fade(100, NUM_LEDS_SIDE);
 
-      if (drop.dir) {
+      if (drop.step == 1) {
         drop.pos--;
         if (drop.pos == -1) {
-          drop.dir = false;
+          drop.step = 0;
           drop.pos += 2;
         }
       } else {
         drop.pos++;
         if (drop.pos == NUM_LEDS_SIDE) {
-          drop.dir = true;
+          drop.step = 1;
           drop.pos -= 2;
         }
       }
@@ -303,7 +321,7 @@ class Animations {
         if (rnd < 48) {
           Drop newDrop = {
             .color = randomColor(),
-            .dir = rnd < 24,
+            .step = rnd < 24 ? 1 : 0,
             .pos = rnd < 24 ? NUM_LEDS_SIDE : -1,
           };
           drops[nbDrops] = newDrop;
@@ -319,7 +337,7 @@ class Animations {
     void runChaser() {
       static Drop drop = {
         .color = CRGB::Black,
-        .dir = false,
+        .step = 0,
         .pos = -1,
       };
 
@@ -368,14 +386,55 @@ class Animations {
       symetrizeSides();
     }
 
+    void runRipples() {
+      static uint8_t nbDrops = 0;
+      static Drop drops[4];
+
+      if (nbDrops < 4) {
+        if (random8() < 64) {
+          Drop newDrop = {
+            .color = nextColor(2),
+            .step = 0,
+            .pos = random8(NUM_LEDS),
+          };
+          drops[nbDrops] = newDrop;
+          nbDrops++;
+        }
+      }
+
+      fade(150, NUM_LEDS);
+
+      for (uint8_t i = 0; i < nbDrops;) {
+        if (drops[i].step == 0) {
+          leds[drops[i].pos] = drops[i].color;
+        }
+        else {
+          leds[wrapIdx(drops[i].pos + drops[i].step)]+= drops[i].color;
+          leds[wrapIdx(drops[i].pos - drops[i].step)]+= drops[i].color;
+          drops[i].color.nscale8(200);
+        }
+        drops[i].step++;
+
+        if (drops[i].step == 10) {
+          // remove drop
+          for (uint8_t j=i; j<nbDrops-1; j++) {
+              drops[j] = drops[j + 1];
+          }
+          nbDrops--;
+          continue;
+        }
+
+        i++;
+      }
+    }
 
     void runPattern() {
       switch (pattern.anim) {
         case A_FORWARD:
-          paletteIndex+= 1;
+          paletteIndex++;
           break;
         case A_BACKWARD:
-          paletteIndex-= 1;
+          paletteIndex--;
           break;
       }
 

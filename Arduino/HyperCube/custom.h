@@ -106,7 +106,9 @@ char* getPatternStr(CustomPattern* pattern) {
   int i = 0;
   buffer[i++] = 'A';
   buffer[i++] = '=';
-  buffer[i++] = getAnimStr(pattern->anim).charAt(0);
+  String animStr = getAnimStr(pattern->anim);
+  memcpy(&buffer[i], animStr.c_str(), animStr.length());
+  i+= animStr.length();
   buffer[i++] = ' ';
   buffer[i++] = 'Z';
   buffer[i++] = '=';
