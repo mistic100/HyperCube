@@ -19,9 +19,6 @@ Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www
 - 5x corner-cache
 - 1x corner-cache-w-hole
 - 4x panel-holder
-- 1x electronics-case
-- 1x electronics-case-top
-- 1x support
 
 In doubt you can replace all beam variants by :
 - 8x beam-w-hole
@@ -29,19 +26,40 @@ In doubt you can replace all beam variants by :
 
 The no-hole variants use less material and are faster to print.
 
+#### External electronics case
+
+- 1x electronics-case
+- 1x electronics-case-top
+- 1x support
+
+#### Electronics case inside support
+
+- 1x electronics-case-support
+- 1x button
+
+
 ### Hardware
 
 - 6x 210mm/2mm square one-way mirrors (or standard glass/PMAA with one-way film)
 - 24x M2 15mm wood screws
 
+
 ### Electronics
 
 - 6x 80cm WS2812 LED strips (60 LEDS/m)
+- 1x 10A 5V power supply
+- 3-wire cable
+
+#### External electronics case
+
 - 1x Arduino Nano
 - 1x Bluetooth module
 - 1x capacitive touch button (20x15mm)
-- 1x 10A 5V power supply
-- 3-wire cable
+
+#### Electronics case inside support
+
+- 1x Wemos D1 mini
+- 1x mini push button (5.8x5.8mm)
 
 
 ## Assembly
