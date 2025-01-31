@@ -1,6 +1,6 @@
 # HyperCube
 
-Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www.hyperspacelight.com/the-hypercube).
+Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www.hyperspacelight.com/the-hypercube). 23cm wide.
 
 ![photo](Images/photo.jpg)
 
@@ -19,53 +19,28 @@ Homemade clone of the [HyperCube by the Hyperspace Lighting Company](https://www
 - 5x corner-cache
 - 1x corner-cache-w-hole
 - 4x panel-holder
-
-In doubt you can replace all beam variants by :
-- 8x beam-w-hole
-- 4x beam-bottom-w-hole (two symmetries !)
-
-The no-hole variants use less material and are faster to print.
-
-#### External electronics case
-
-- 1x electronics-case
-- 1x electronics-case-top
-- 1x support
-
-#### Electronics case inside support
-
 - 1x electronics-case-support
-- 1x button
-
+	- use the alt version if you don't want to include a push-button
 
 ### Hardware
 
 - 6x 210mm/2mm square one-way mirrors (or standard glass/PMAA with one-way film)
-- 24x M2 15mm wood screws
+- 24x M2 15mm conical screws
 
 
 ### Electronics
 
 - 6x 80cm WS2812 LED strips (60 LEDS/m)
-- 1x 10A 5V power supply
-- 3-wire cable
-
-#### External electronics case
-
-- 1x Arduino Nano
-- 1x Bluetooth module
-- 1x capacitive touch button (20x15mm)
-
-#### Electronics case inside support
-
 - 1x Wemos D1 mini
-- 1x mini push button (5.8x5.8mm)
+- 1x 16mm push button
+- 1x female DC jack with terminals
+- 1x 5-10A 5V power supply
 
 
 ## Assembly
 
 1. Start building the cube from the top panel, taking care where you use beams with or without holes to pass the wires. You will use all beams and corner pieces and five panels, dont put the last bottom panel yet
-2. Cut the LED strips to lenght en solder the wires, I recommend using dedicated power lines for each strip but you can use a single wire for the data line
+2. Cut the LED strips to length en solder the wires, I recommend using dedicated power lines for each strip but you can use a single wire for the data line
 3. Glue the strips to each side and pass the wires in the beams, all wires must output on the same corner. I recommend adding CA glue as the standard 3M tape is not adhesive enough
 4. Check that every strip is working correctly
 5. Put the bottom panel and secure it in place by glueing the four panel holders
@@ -75,9 +50,18 @@ The following diagram shows one way to arrange strips (flattened cube seen from 
 ![diagram](Images/diagram.png)
 
 
-## Code
+## Software
 
-### Configuration
+I recommend to install [WLED](https://kno.wled.ge/). Don't forget to divide the maximum power output by 6 as all the strips are in parallel.
+
+However you can find in this repository a custom firmware I don't use anymore alongside a custom Android app. This was developped for an Arduino Nano with a Bluetooth module.
+
+<details>
+	<summary>Custom firmware and app</summary>
+
+### Code
+
+#### Configuration
 
 Edit the `constants.h` file according to your wiring :
 
@@ -88,7 +72,7 @@ Edit the `constants.h` file according to your wiring :
 
 Edit `MAX_MILLI_AMPS` according to the rating of your power supply (keep a safety margin, especially with cheap Chinese stuff).
 
-### Controls
+#### Controls
 
 The cube is controlled via USB and Bluetooth and can received basic serial commands (`\n` terminated):
 
@@ -140,12 +124,13 @@ This is done to pause the FastLED processing and have enough CPU cycles to consu
 *Note*: Commands over 20 chars long must be splitted into multiple packets, by limitation of the Serial over Bluetooth protocol.
 Only the last packet will be `\n` terminated.
 
-## Application
+### Application
 
 A flutter application (Android only) allows to control the light from your smartphone. It is only compatible with HM-10 Bluetooth modules.
 
 ![app](Images/app.png) ![app-pattern](Images/app-pattern.png) ![app-console](Images/app-console.png)
 
+</details>
 
 ## License
 
